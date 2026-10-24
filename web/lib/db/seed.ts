@@ -1,6 +1,8 @@
 import type { Db } from "./index";
 import { inTransaction, resetSchema } from "./index";
 import { recordEvent } from "../events";
+import { DEMO_ACCOUNTS } from "../auth/demo-accounts";
+import { hashPassword } from "../auth/password";
 import { addDays, dayKey, SHIFTS } from "../time";
 
 interface SeedProduct {
@@ -14,13 +16,6 @@ interface SeedProduct {
   synonyms: string[];
   lastMoveDays: number;
 }
-
-const OPERATORS = [
-  { id: "o-amina", name: "Amina Otieno", role: "operator" },
-  { id: "o-brian", name: "Brian Mwangi", role: "operator" },
-  { id: "o-chebet", name: "Chebet Kiprop", role: "operator" },
-  { id: "o-daniel", name: "Daniel Odhiambo", role: "supervisor" },
-] as const;
 
 const P = (
   sku: string,
@@ -175,9 +170,11 @@ export function seedDatabase(db: Db, now: Date): SeedSummary {
 
   return inTransaction(db, () => {
     const insOperator = db.prepare(
-      "INSERT INTO operators (id, name, role) VALUES (?, ?, ?)",
+      "INSERT INTO operators (id, name, role, username, password_hash) VALUES (?, ?, ?, ?, ?)",
     );
-    for (const o of OPERATORS) insOperator.run(o.id, o.name, o.role);
+    for (const a of DEMO_ACCOUNTS) {
+      insOperator.run(a.id, a.name, a.role, a.username, hashPassword(a.password, `demo-salt-${a.username}`));
+    }
 
     const insShift = db.prepare(
       "INSERT INTO shifts (id, name, start_hour, end_hour) VALUES (?, ?, ?, ?)",

@@ -1,10 +1,15 @@
+/** Bump this whenever the tables change. A database with another version is rebuilt and reseeded. */
+export const SCHEMA_VERSION = 3;
+
 export const SCHEMA_SQL = `
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS operators (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('operator', 'supervisor'))
+  role TEXT NOT NULL CHECK (role IN ('operator', 'supervisor', 'inventory_controller', 'logistics_manager')),
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS shifts (
@@ -125,7 +130,9 @@ CREATE TABLE IF NOT EXISTS counts (
   operator_id TEXT NOT NULL REFERENCES operators(id),
   shift_id TEXT NOT NULL REFERENCES shifts(id),
   counted_at TEXT NOT NULL,
-  adjusted_at TEXT
+  adjusted_at TEXT,
+  declined_at TEXT,
+  decline_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS equipment_issues (

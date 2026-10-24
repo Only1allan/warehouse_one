@@ -70,16 +70,24 @@ export function computeDiscrepancy(
   };
 }
 
-export function describeDiscrepancy(line: DiscrepancyLine, name: string): string {
+export type DiscrepancyMode = "receipt" | "dispatch";
+
+export function describeDiscrepancy(
+  line: DiscrepancyLine,
+  name: string,
+  mode: DiscrepancyMode = "receipt",
+): string {
+  const expectedWord = mode === "receipt" ? "expected" : "ordered";
+  const actualWord = mode === "receipt" ? "received" : "loaded";
   switch (line.status) {
     case "exact":
-      return `${name}: ${line.actual} as expected`;
+      return `${name}: ${line.actual} as ${expectedWord}`;
     case "short":
     case "missing":
-      return `${name} expected ${line.expected}, received ${line.actual} (missing ${-line.difference})`;
+      return `${name} ${expectedWord} ${line.expected}, ${actualWord} ${line.actual} (missing ${-line.difference})`;
     case "over":
-      return `${name} expected ${line.expected}, received ${line.actual} (${line.difference} extra)`;
+      return `${name} ${expectedWord} ${line.expected}, ${actualWord} ${line.actual} (${line.difference} extra)`;
     case "unexpected":
-      return `${name} not on the order, received ${line.actual}`;
+      return `${name} not on the order, ${actualWord} ${line.actual}`;
   }
 }

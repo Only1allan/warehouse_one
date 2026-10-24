@@ -29,11 +29,17 @@ Test approach for every ticket: behaviour tested at the application-service seam
 | 14 | Voice: push-to-talk questions | Must | 04, 08 |
 | 15 | Supervisor: exceptions view | Must | 10, 12 |
 | 16 | Offline checkpoint (Wed 28) | Must | 07, 08, 09, 11 |
-| 17 | Inventory health dashboard | Nice (cut 2nd) | 05 |
-| 18 | Shift handover | Nice (cut 1st) | 15 |
-| 19 | Dispatch verification | Nice (cut 3rd) | 11 |
+| 17 | Inventory health dashboard | Must (scope change) | 05 |
+| 18 | Shift handover | Must (scope change) | 15 |
+| 19 | Dispatch verification | Must (scope change) | 11 |
 | 20 | Eval script and measured results | Must | 08, 11, 13, 14 |
-| 21 | Submission pack: README, disclosures, demo script, final run-through | Must | 16, 20 |
+| 21 | Submission pack: README, disclosures, demo script, final run-through | Must | 16, 20, 22-27 |
+| 22 | Accounts, sign-in and roles (seeded login per persona) | Must (scope change) | 01 |
+| 23 | Landing page and sign-in page | Must (scope change) | 22 |
+| 24 | Role-aware navigation and home dashboards | Must (scope change) | 22 |
+| 25 | Inventory Controller workspace | Must (scope change) | 22, 12 |
+| 26 | Logistics Manager workspace | Must (scope change) | 22, 19 |
+| 27 | Per-role end-to-end verification (all personas, all features) | Must (scope change) | 22-26 |
 
 ### Dependency graph
 
@@ -63,7 +69,7 @@ Test approach for every ticket: behaviour tested at the application-service seam
 5. 17, 19, 18 as time allows (reverse of the cut order).
 6. 20, then 21.
 
-Cut order if behind: 18 (handover), then 17 (health), then 19 (dispatch). All other tickets are must-haves.
+**Scope change (2026-10-24, user request):** every feature must work for every persona (Operator, Supervisor, Inventory Controller, Logistics Manager), with a landing page and a sign-in page offering a seeded login for each user. Tickets 17, 18 and 19 are therefore required, and tickets 22 to 27 are added. The earlier "no login, operator and shift selector" decision (grill-me A9, ticket 05) is replaced by real sessions (see decision D-004). If time runs out, the work is cut in this order: polish on 26, then 25, then everything else stays.
 
 ---
 
@@ -395,3 +401,96 @@ Cut order if behind: 18 (handover), then 17 (health), then 19 (dispatch). All ot
 - [ ] The demo script is written, and a full offline rehearsal passes.
 - [ ] No secrets, private data or large model files are in the repository.
 - [ ] Submission links (repo, video) are accessible, with a checklist ready for the noon Friday submission.
+
+---
+
+# 22: Accounts, sign-in and roles (seeded login per persona)
+
+**What to build:** Real local accounts. Each of the four personas (Operator, Supervisor, Inventory Controller, Logistics Manager) has a seeded user with a username and password. A user signs in, gets a signed session cookie, and every API request is checked against that session and the user's role. Actions are attributed to the signed-in user (not to a value the browser sends). The shift is chosen at sign-in (defaulting to the current one) and can be changed later. Passwords are stored hashed. Sign-out ends the session. No external services are used.
+
+**Blocked by:** 01
+
+**Status:** ready-for-agent
+
+- [ ] Seeded users exist for all four roles, each able to sign in with their documented demo password (test).
+- [ ] Wrong passwords and unknown users are rejected with the same message (test).
+- [ ] Session tokens cannot be forged, altered or reused after expiry (tests).
+- [ ] Every API route that reads or changes warehouse data rejects a request with no valid session (401).
+- [ ] The role permissions matrix is enforced on the server (tests for each capability and role).
+- [ ] The actor on every event, receipt, count and exception is the signed-in user.
+
+---
+
+# 23: Landing page and sign-in page
+
+**What to build:** A public landing page that explains the product to a judge or warehouse manager in one screen, then shows what each persona gets, how the offline guarantee works, and a clear way to sign in. A sign-in page shows the seeded demo logins for the four users, with one-tap fill, so a judge can try every role in seconds. Designed with the installed design skills. No external requests, Poppins bundled.
+
+**Blocked by:** 22
+
+**Status:** ready-for-agent
+
+- [ ] `/` shows the landing page to everyone, with a sign-in call to action (and "Open the app" when already signed in).
+- [ ] `/signin` lists the four demo logins and signs in with either typed or one-tap credentials.
+- [ ] Wrong credentials show a plain error message and keep the user on the page.
+- [ ] Neither page requests any external origin.
+- [ ] Both pages are usable on a phone-sized screen and with keyboard only.
+
+---
+
+# 24: Role-aware navigation and home dashboards
+
+**What to build:** After sign-in each user lands on a home screen made for their job, and sees only the destinations their role can use. Operator: today's deliveries, orders to load, quick actions. Supervisor: open exceptions, products below minimum, shift handover. Inventory Controller: counts waiting for reconciliation, dead and slow stock. Logistics Manager: open orders, dispatch accuracy, shortfalls. All numbers come from the records.
+
+**Blocked by:** 22
+
+**Status:** ready-for-agent
+
+- [ ] Each role's home shows figures computed from the database (tests for each figure).
+- [ ] Navigation shows only destinations the role may use, and direct links to others show a clear "not available for your role" page.
+- [ ] Switching user changes the home screen and the navigation.
+
+---
+
+# 25: Inventory Controller workspace
+
+**What to build:** The Inventory Controller can search stock records by product, location or category, see each record's recent movements, start cycle counts, and reconcile counts that show a variance by approving or declining the stock adjustment. They also see the inventory health findings that matter for accuracy.
+
+**Blocked by:** 22, 12
+
+**Status:** ready-for-agent
+
+- [ ] Stock records can be searched and show movement history for each product.
+- [ ] A count with variance appears in a reconciliation list, and approving it adjusts stock and writes an event (declining records the decision and leaves stock unchanged).
+- [ ] Only roles with the capability can approve (tests).
+- [ ] The cycle-count flow from ticket 12 is available to this role.
+
+---
+
+# 26: Logistics Manager workspace
+
+**What to build:** The Logistics Manager sees shipment visibility (open and dispatched orders with status), dispatch accuracy (share of dispatches loaded in full, shortfalls by order and customer) and process compliance (receipts and dispatches with discrepancies, how many are resolved), and can verify a dispatch and generate a shift handover.
+
+**Blocked by:** 22, 19
+
+**Status:** ready-for-agent
+
+- [ ] Shipment list shows each order's status and loaded versus ordered quantities.
+- [ ] Dispatch accuracy and shortfalls are computed from the dispatch records (tests).
+- [ ] Process compliance figures are computed from receipts and dispatches (tests).
+- [ ] Dispatch verification and shift handover are available to this role.
+
+---
+
+# 27: Per-role end-to-end verification
+
+**What to build:** Browser tests that sign in as each of the four seeded users and walk the features that role owns, plus checks that features outside a role are blocked. This is the proof that "all features work for all users".
+
+**Blocked by:** 22, 23, 24, 25, 26
+
+**Status:** ready-for-agent
+
+- [ ] Operator: sign in, ask, receive, count, voice, dispatch verification.
+- [ ] Supervisor: exceptions, health, handover, adjust stock.
+- [ ] Inventory Controller: stock records, reconcile a count.
+- [ ] Logistics Manager: shipments, dispatch accuracy, handover.
+- [ ] A user cannot reach another role's API or screen.

@@ -4,6 +4,8 @@ export type ErrorCode =
   | "conflict"
   | "unknown_actor"
   | "forbidden"
+  | "unauthenticated"
+  | "invalid_credentials"
   | "model_unavailable";
 
 export class AppError extends Error {

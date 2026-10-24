@@ -1,8 +1,9 @@
 import type { Db } from "../db";
+import type { Role } from "../auth/capabilities";
 import { shiftForDate } from "../time";
 
 export interface SessionOptions {
-  operators: Array<{ id: string; name: string; role: "operator" | "supervisor" }>;
+  operators: Array<{ id: string; name: string; role: Role }>;
   shifts: Array<{ id: string; name: string; startHour: number; endHour: number }>;
   currentShiftId: string;
 }

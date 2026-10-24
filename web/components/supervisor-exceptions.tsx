@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ExceptionDetail, ExceptionKind, ExceptionRow } from "@/lib/services/exceptions";
 import { Icon, type IconName } from "./icons";
-import { useOperator } from "./operator-context";
+import { useAuth } from "./auth-context";
 import { Button, Panel, Skeleton } from "./ui";
 
 const kinds: Array<{ value: ExceptionKind | ""; label: string }> = [
@@ -86,7 +86,7 @@ function Detail({ id }: { id: number }) {
 }
 
 export function SupervisorExceptions() {
-  const { operatorId, shiftId, options } = useOperator();
+  const { shifts } = useAuth();
   const [kind, setKind] = useState<ExceptionKind | "">("");
   const [shift, setShift] = useState("");
   const [rows, setRows] = useState<ExceptionRow[] | null>(null);
@@ -114,7 +114,7 @@ export function SupervisorExceptions() {
     setSaving(true);
     setError(null);
     try {
-      await getJson("/api/supervisor/equipment-issues", { equipment, description, operatorId, shiftId });
+      await getJson("/api/supervisor/equipment-issues", { equipment, description });
       setEquipment("");
       setDescription("");
       await load();
@@ -158,7 +158,7 @@ export function SupervisorExceptions() {
             <span className="mb-1 block text-sm font-medium text-soft">Shift</span>
             <select value={shift} onChange={(e) => setShift(e.target.value)} className="h-12 rounded-control border border-line-strong bg-surface px-3 font-medium">
               <option value="">All shifts</option>
-              {options?.shifts.map((s) => (
+              {shifts.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>

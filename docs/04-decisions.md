@@ -47,3 +47,24 @@ Status: Decided
 - Design skills used for UI work: `frontend-design`, `design-taste-frontend`, `impeccable` (telemetry off, no hooks installed) and `apple-design`.
 - Tests: Vitest for logic, Playwright (Chromium) for browser flows.
 - Typeface: Poppins, bundled locally (no external font requests).
+
+## D-004: Scope change, real accounts and all features for all personas
+
+Date: 2026-10-24
+Status: Decided (user request)
+
+The user asked for: (1) every feature implemented for every user, and (2) a landing page and a sign-in page with a seeded login for each user.
+
+**What changes**
+- The earlier decision of "no authentication, operator and shift selector" (grill-me A9) is replaced by local accounts with hashed passwords and signed session cookies. Actions are attributed to the signed-in user.
+- The four personas from the source brief (Operator, Supervisor, Inventory Controller, Logistics Manager) each get a seeded user and a role-aware experience. Previously Inventory Controller and Logistics Manager were served by the same screens.
+- Dispatch verification, inventory health and shift handover are no longer nice-to-haves. They are required.
+- New tickets: 22 to 27 (see 03-tickets.md).
+
+**What does not change**
+- All AI is local through QVAC. The language model never writes data and never invents a number.
+- Authentication is local to the device: no identity provider, no network. Demo credentials are shown on the sign-in page on purpose so judges can try every role. They are demo values for seeded data only, and the page says so.
+
+**Risks**
+- Schedule: this adds substantial work to a 6-day plan. Mitigation: build the auth layer first, because everything else depends on it, then deliver role by role.
+- A visible-credentials sign-in page is only appropriate for a demo. The README states how to remove it (set the demo accounts switch off).

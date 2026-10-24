@@ -4,6 +4,7 @@ import path from "node:path";
 import * as sdk from "@qvac/sdk";
 import { COPILOT_TOOLS } from "../lib/copilot/tools";
 import { routingSystemPrompt } from "../lib/copilot/prompt";
+import { recoverToolCall } from "../lib/copilot/tool-recovery";
 
 const root = process.cwd();
 const fixtures = path.join(root, "data", "fixtures");
@@ -96,7 +97,7 @@ async function llm(names: string[]) {
   }>;
   const tools = COPILOT_TOOLS.map((t) => ({ type: "function" as const, ...t }));
   for (const name of names) {
-    await measure("llm", name, () => sdk.loadModel({ modelSrc: constant(name), modelType: "llm" } as any) as Promise<string>, async (modelId) => {
+    await measure("llm", name, () => sdk.loadModel({ modelSrc: constant(name), modelType: "llm", modelConfig: { ctx_size: 4096, tools: true } } as any) as Promise<string>, async (modelId) => {
       let correct = 0;
       let argsOk = 0;
       let argsTotal = 0;
@@ -114,12 +115,15 @@ async function llm(names: string[]) {
           ],
           stream: true,
           tools,
-          generationParams: { tool_choice: "auto", predict: 96, temp: 0 },
+          generationParams: { tool_choice: process.env.TC ?? "required", predict: 200, temp: 0, ...(name.startsWith("QWEN3") ? { reasoning_budget: 0 } : {}) },
         } as any);
         let call: { name: string; arguments: Record<string, unknown> } | null = null;
+        let text = "";
         for await (const ev of run.events) {
           if (ev.type === "toolCall" && !call) call = { name: ev.call.name, arguments: ev.call.arguments };
+          if (ev.type === "contentDelta") text += ev.text;
         }
+        if (!call) call = recoverToolCall(text, COPILOT_TOOLS.map((t) => t.name));
         latencies.push((Date.now() - t0) / 1000);
         const stats = await run.stats;
         if (stats?.timeToFirstToken) firsts.push(stats.timeToFirstToken);

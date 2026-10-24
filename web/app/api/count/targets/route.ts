@@ -1,10 +1,9 @@
-import { getSeededDb } from "@/lib/db/runtime";
-import { handle } from "@/lib/http";
+import { handleAuthed } from "@/lib/http";
 import { listCountTargets } from "@/lib/services/counting";
 
 export function GET(request: Request) {
-  return handle(() => {
+  return handleAuthed("count", (ctx) => {
     const q = new URL(request.url).searchParams.get("q") ?? "";
-    return Response.json(listCountTargets(getSeededDb(), q).slice(0, 40));
+    return Response.json(listCountTargets(ctx.db, q).slice(0, 40));
   });
 }

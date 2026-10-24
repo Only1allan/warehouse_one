@@ -86,7 +86,7 @@ export async function* askCopilot(
   for await (const event of deps.model.ask({
     messages,
     tools: COPILOT_TOOLS,
-    toolChoice: "auto",
+    toolChoice: "required",
     maxTokens: 120,
     signal,
   })) {

@@ -55,6 +55,26 @@ const paths = {
   stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  home: <path d="M4 11l8-7 8 7v9h-5v-6H9v6H4v-9Z" />,
+  truck: (
+    <>
+      <path d="M3 6h11v10H3V6ZM14 10h4l3 3v3h-7v-6Z" />
+      <circle cx="7.5" cy="17.5" r="1.8" />
+      <circle cx="17.5" cy="17.5" r="1.8" />
+    </>
+  ),
+  pulse: <path d="M3 12h4l2.5-6 4 12 2.5-6H21" />,
+  note: (
+    <>
+      <path d="M6 3h9l4 4v14H6V3Z" />
+      <path d="M15 3v4h4M9 12h6M9 16h6" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M10 4H5v16h5M15 8l4 4-4 4M9 12h10" />
+    </>
+  ),
   alert: (
     <>
       <path d="M12 4l9 16H3L12 4Z" />

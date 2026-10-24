@@ -32,5 +32,39 @@
       "meanSecondsPerImage": 17.36,
       "trueVsAnswer": "6:5 12:12 18:19 24:15 31:21 35:30"
     }
+  },
+  {
+    "role": "vision",
+    "candidate": "QWEN3_5_0_8B_MULTIMODAL_Q8_0",
+    "ok": true,
+    "baselineMB": 144,
+    "loadSeconds": 6.4,
+    "loadedMB": 1640,
+    "deltaMB": 1496,
+    "metrics": {
+      "exactPct": 0,
+      "within1Pct": 0,
+      "meanAbsError": 20,
+      "unparsed": 0,
+      "meanSecondsPerImage": 22.21,
+      "trueVsAnswer": "6:1 12:1 18:1 24:1 31:1 35:1"
+    }
+  },
+  {
+    "role": "vision",
+    "candidate": "QWEN3_5_2B_MULTIMODAL_Q4_K_M",
+    "ok": true,
+    "baselineMB": 143,
+    "loadSeconds": 19.5,
+    "loadedMB": 2811,
+    "deltaMB": 2668,
+    "metrics": {
+      "exactPct": 0,
+      "within1Pct": 0,
+      "meanAbsError": 20,
+      "unparsed": 0,
+      "meanSecondsPerImage": 64.42,
+      "trueVsAnswer": "6:1 12:1 18:1 24:1 31:1 35:1"
+    }
   }
 ]

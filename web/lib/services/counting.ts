@@ -3,7 +3,9 @@ import { inTransaction } from "../db";
 import { computeVariance, describeVariance } from "../domain/variance";
 import { AppError } from "../errors";
 import { recordEvent } from "../events";
+import { can, isRole } from "../auth/capabilities";
 import { isValidActor } from "./session";
+import { isValidUploadPath } from "./uploads";
 
 export interface CountTarget {
   sku: string;
@@ -39,7 +41,7 @@ export function listCountTargets(db: Db, query = ""): CountTarget[] {
   return rows.map((r) => ({ sku: r.sku, name: r.name, locationId: r.location_id, expectedQty: r.qty }));
 }
 
-function getTarget(db: Db, sku: string, locationId: string): CountTarget {
+export function getCountTarget(db: Db, sku: string, locationId: string): CountTarget {
   const row = db
     .prepare(
       `SELECT s.sku, p.name, s.location_id, s.qty FROM stock s JOIN products p ON p.sku = s.sku
@@ -73,7 +75,10 @@ export function confirmCount(
   if (!Number.isInteger(input.confirmedQty) || input.confirmedQty < 0) {
     throw new AppError("invalid_request", "The counted quantity must be a whole number of zero or more.");
   }
-  const target = getTarget(db, input.sku, input.locationId);
+  if (input.photoPath && !isValidUploadPath(input.photoPath)) {
+    throw new AppError("invalid_request", "The photo reference is not valid.");
+  }
+  const target = getCountTarget(db, input.sku, input.locationId);
   const variance = computeVariance(target.expectedQty, input.confirmedQty);
   const at = deps.now.toISOString();
 
@@ -149,17 +154,20 @@ export function adjustStockFromCount(
   const role = (
     db.prepare("SELECT role FROM operators WHERE id = ?").get(input.operatorId) as { role: string }
   ).role;
-  if (role !== "supervisor") {
-    throw new AppError("forbidden", "Only a supervisor can adjust stock.", 403);
+  if (!isRole(role) || !can(role, "stock_adjust")) {
+    throw new AppError("forbidden", "Only a supervisor or inventory controller can adjust stock.", 403);
   }
   const count = db
     .prepare("SELECT * FROM counts WHERE id = ?")
     .get(input.countId) as
-    | { id: number; sku: string; location_id: string; variance: number; adjusted_at: string | null }
+    | { id: number; sku: string; location_id: string; variance: number; adjusted_at: string | null; declined_at: string | null }
     | undefined;
   if (!count) throw new AppError("not_found", `Count ${input.countId} was not found.`, 404);
   if (count.adjusted_at) {
     throw new AppError("conflict", "Stock was already adjusted for this count.", 409);
+  }
+  if (count.declined_at) {
+    throw new AppError("conflict", "This count was declined, so stock cannot be adjusted for it.", 409);
   }
   if (count.variance === 0) {
     throw new AppError("invalid_request", "This count has no variance to adjust.");

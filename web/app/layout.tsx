@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { AppShell } from "@/components/app-shell";
-import { OperatorProvider } from "@/components/operator-context";
+import { AuthProvider } from "@/components/auth-context";
 
 const poppins = localFont({
   src: [
@@ -30,9 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={poppins.variable}>
       <body>
-        <OperatorProvider>
-          <AppShell>{children}</AppShell>
-        </OperatorProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

@@ -1,10 +1,11 @@
-import { getSeededDb } from "@/lib/db/runtime";
-import { handle, readJson } from "@/lib/http";
+import { handleAuthed, readJson } from "@/lib/http";
 import { confirmCount, type ConfirmCountInput } from "@/lib/services/counting";
 
 export function POST(request: Request) {
-  return handle(async () => {
+  return handleAuthed("count", async (ctx) => {
     const body = await readJson<ConfirmCountInput>(request);
-    return Response.json(confirmCount(getSeededDb(), { now: new Date() }, body));
+    return Response.json(
+      confirmCount(ctx.db, { now: ctx.now }, { ...body, operatorId: ctx.user.id, shiftId: ctx.shiftId }),
+    );
   });
 }

@@ -71,9 +71,9 @@ describe("counting", () => {
   it("keeps the model's proposal separate from the confirmed value", () => {
     const db = freshDb();
     const record = confirmCount(db, { now: FIXED_NOW }, {
-      sku: "200310", locationId: "A-2-1", confirmedQty: 33, proposedQty: 31, photoPath: "uploads/a.jpg", ...operator,
+      sku: "200310", locationId: "A-2-1", confirmedQty: 33, proposedQty: 31, photoPath: "uploads/counts/00000000-0000-4000-8000-000000000000.jpg", ...operator,
     });
-    expect(getCount(db, record.id)).toMatchObject({ proposedQty: 31, confirmedQty: 33, photoPath: "uploads/a.jpg" });
+    expect(getCount(db, record.id)).toMatchObject({ proposedQty: 31, confirmedQty: 33, photoPath: "uploads/counts/00000000-0000-4000-8000-000000000000.jpg" });
   });
 
   it("rejects bad input and changes nothing", () => {
@@ -109,7 +109,7 @@ describe("adjusting stock from a count", () => {
 
   it("refuses an operator who is not a supervisor", () => {
     const { db, record } = counted();
-    expect(() => adjustStockFromCount(db, { now: FIXED_NOW }, { countId: record.id, ...operator })).toThrow(/Only a supervisor/);
+    expect(() => adjustStockFromCount(db, { now: FIXED_NOW }, { countId: record.id, ...operator })).toThrow(/Only a supervisor or inventory controller/);
     expect(qtyAt(db, "200310", "A-2-1")).toBe(35);
   });
 

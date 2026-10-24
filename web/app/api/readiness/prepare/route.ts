@@ -1,6 +1,8 @@
 import { connection } from "next/server";
 import { getModelPort } from "@/lib/ai/qvac/qvac-model-port";
 import type { PrepareProgress } from "@/lib/ai/model-port";
+import { requireAuth } from "@/lib/auth/server";
+import { getSeededDb } from "@/lib/db/runtime";
 import { errorResponse } from "@/lib/errors";
 
 const encoder = new TextEncoder();
@@ -8,6 +10,7 @@ const encoder = new TextEncoder();
 export async function POST() {
   try {
     await connection();
+    await requireAuth(getSeededDb(), "readiness");
     const port = getModelPort();
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {

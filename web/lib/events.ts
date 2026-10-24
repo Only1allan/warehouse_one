@@ -5,6 +5,7 @@ export type EventType =
   | "dispatch_confirmed"
   | "count_confirmed"
   | "stock_adjusted"
+  | "adjustment_declined"
   | "equipment_issue_reported"
   | "demo_reset";
 

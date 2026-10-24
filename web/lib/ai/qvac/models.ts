@@ -14,7 +14,7 @@ function model(constantName: string) {
  * (CPU only, about 8 GB of memory). See docs/04-decisions.md for the evidence.
  */
 export const MODELS = {
-  llm: { constant: "LLAMA_3_2_1B_INST_Q4_0" },
+  llm: { constant: "LLAMA_3_2_1B_INST_Q4_0", contextSize: 4096, reasoningBudget: undefined as number | undefined },
   embeddings: { constant: "EMBEDDINGGEMMA_300M_Q4_0" },
   speech: { constant: "PARAKEET_TDT_0_6B_V3_Q8_0", engine: "parakeet-transcription" as const },
   ocr: {

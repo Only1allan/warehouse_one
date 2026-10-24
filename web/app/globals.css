@@ -160,3 +160,36 @@ button:active:not(:disabled) {
   animation: skeleton 1.4s linear infinite;
   border-radius: var(--radius-control);
 }
+
+/* Landing: one authored entrance for the product preview. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  opacity: 0;
+  animation: rise 640ms var(--ease-out) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+.display {
+  font-size: clamp(2.5rem, 6.4vw, 4.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  text-wrap: balance;
+}

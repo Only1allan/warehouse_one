@@ -8,7 +8,6 @@ import type {
   ReceiptReport,
 } from "@/lib/services/receiving";
 import { Icon } from "./icons";
-import { useOperator } from "./operator-context";
 import { QuantityField } from "./quantity-field";
 import { Button, Panel, Skeleton, StatusPill, type Status } from "./ui";
 
@@ -42,7 +41,6 @@ function dueLabel(date: string): string {
 }
 
 export function ReceiveFlow() {
-  const { operatorId, shiftId, ready } = useOperator();
   const [orders, setOrders] = useState<PurchaseOrderSummary[] | null>(null);
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [received, setReceived] = useState<Record<string, string>>({});
@@ -127,8 +125,6 @@ export function ReceiveFlow() {
       const result = await api<{ receiptId: number; report: ReceiptReport }>("/api/receiving/confirm", {
         poNumber: po.poNumber,
         lines: po.lines.map((l) => ({ sku: l.sku, qty: Number(received[l.sku]) })),
-        operatorId,
-        shiftId,
       });
       setDone(result);
       void loadOrders();
@@ -340,7 +336,7 @@ export function ReceiveFlow() {
             </ul>
           ) : null}
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button variant="primary" icon="check" onClick={confirm} disabled={saving || !ready}>
+            <Button variant="primary" icon="check" onClick={confirm} disabled={saving}>
               {saving ? "Saving…" : "Confirm receipt"}
             </Button>
             <Button variant="quiet" onClick={reset} disabled={saving}>

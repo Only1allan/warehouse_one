@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "reseed": "tsx scripts/reseed.ts",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "fixtures": "tsx scripts/make-fixtures.mts"
   },
   "dependencies": {

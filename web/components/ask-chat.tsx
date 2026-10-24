@@ -6,6 +6,7 @@ import type { AskStreamEvent } from "@/lib/services/ask";
 import { streamEvents } from "@/lib/sse-client";
 import { CopilotCard } from "./copilot-cards";
 import { Icon } from "./icons";
+import { VoiceButton } from "./voice-button";
 import { Button, Panel, Skeleton } from "./ui";
 
 interface Message {
@@ -149,8 +150,10 @@ export function AskChat() {
         <div ref={endRef} />
       </div>
 
+      <div className="sticky bottom-24 z-[5] space-y-2 rounded-panel border border-line bg-surface p-2 shadow-panel md:bottom-4">
+      <VoiceButton onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />
       <form
-        className="sticky bottom-24 z-[5] flex gap-2 rounded-panel border border-line bg-surface p-2 shadow-panel md:bottom-4"
+        className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);
@@ -174,6 +177,7 @@ export function AskChat() {
           </Button>
         )}
       </form>
+      </div>
     </div>
   );
 }

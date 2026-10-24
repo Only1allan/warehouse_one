@@ -22,6 +22,7 @@ import {
   loadSopDocuments,
   SOP_WORKSPACE,
 } from "../../copilot/sop";
+import { recoverToolCall } from "../../copilot/tool-recovery";
 import {
   buildDocumentRead,
   EXTRACTION_SCHEMA,
@@ -62,7 +63,12 @@ export class QvacModelPort implements ModelPort {
   constructor() {
     this.models.register(
       "llm",
-      () => loadModel({ modelSrc: src(MODELS.llm.constant), modelType: "llm" }) as Promise<string>,
+      () =>
+        loadModel({
+          modelSrc: src(MODELS.llm.constant),
+          modelType: "llm",
+          modelConfig: { ctx_size: MODELS.llm.contextSize, tools: true },
+        } as never) as Promise<string>,
       true,
     );
     this.models.register(
@@ -114,8 +120,11 @@ export class QvacModelPort implements ModelPort {
         temp: 0,
         ...(request.toolChoice ? { tool_choice: request.toolChoice } : {}),
         ...(request.maxTokens ? { predict: request.maxTokens } : {}),
+        ...(request.tools?.length && MODELS.llm.reasoningBudget !== undefined
+          ? { reasoning_budget: MODELS.llm.reasoningBudget }
+          : {}),
       },
-    });
+    } as never);
 
     const onAbort = () => {
       void cancel({ requestId: run.requestId }).catch(() => undefined);
@@ -124,10 +133,14 @@ export class QvacModelPort implements ModelPort {
     request.signal?.addEventListener("abort", onAbort, { once: true });
 
     try {
+      let sawToolCall = false;
+      let text = "";
       for await (const event of run.events) {
         if (event.type === "contentDelta") {
+          text += event.text;
           yield { type: "token", text: event.text };
         } else if (event.type === "toolCall") {
+          sawToolCall = true;
           yield {
             type: "toolCall",
             id: event.call.id,
@@ -141,6 +154,12 @@ export class QvacModelPort implements ModelPort {
             tokensPerSecond: event.stats.tokensPerSecond,
           };
         } else if (event.type === "completionDone") {
+          if (!sawToolCall && request.tools?.length) {
+            const recovered = recoverToolCall(text, request.tools.map((t) => t.name));
+            if (recovered) {
+              yield { type: "toolCall", id: "recovered-1", name: recovered.name, arguments: recovered.arguments };
+            }
+          }
           yield {
             type: "done",
             stopReason: event.stopReason === "stopSequence" || !event.stopReason ? "eos" : event.stopReason,

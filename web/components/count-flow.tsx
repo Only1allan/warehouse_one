@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { computeVariance } from "@/lib/domain/variance";
 import type { CountRecord, CountTarget } from "@/lib/services/counting";
 import { Icon } from "./icons";
-import { useOperator } from "./operator-context";
+import { upload } from "@/lib/api-client";
+import { useAuth } from "./auth-context";
 import { QuantityField } from "./quantity-field";
 import { Button, Panel, Skeleton, StatusPill } from "./ui";
 
@@ -41,7 +42,7 @@ function VarianceBanner({ expected, counted }: { expected: number; counted: numb
 }
 
 export function CountFlow() {
-  const { operatorId, shiftId, options, ready } = useOperator();
+  const { can } = useAuth();
   const [query, setQuery] = useState("");
   const [targets, setTargets] = useState<CountTarget[] | null>(null);
   const [target, setTarget] = useState<CountTarget | null>(null);
@@ -50,8 +51,14 @@ export function CountFlow() {
   const [adjusted, setAdjusted] = useState<{ newQty: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [proposed, setProposed] = useState<number | null>(null);
+  const [proposalNote, setProposalNote] = useState<string | null>(null);
+  const [estimating, setEstimating] = useState(false);
+  const urlRef = useRef<string | null>(null);
 
-  const isSupervisor = options?.operators.find((o) => o.id === operatorId)?.role === "supervisor";
+  const canAdjust = can("stock_adjust");
 
   useEffect(() => {
     const handle = setTimeout(async () => {
@@ -64,6 +71,34 @@ export function CountFlow() {
     return () => clearTimeout(handle);
   }, [query]);
 
+  async function estimate(file: File) {
+    if (!target) return;
+    setEstimating(true);
+    setError(null);
+    setProposalNote(null);
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = URL.createObjectURL(file);
+    setPhotoUrl(urlRef.current);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      form.append("sku", target.sku);
+      form.append("locationId", target.locationId);
+      const result = await upload<{ photoPath: string; proposedQty: number | null; note: string | null }>(
+        "/api/count/propose",
+        form,
+      );
+      setPhotoPath(result.photoPath);
+      setProposed(result.proposedQty);
+      setProposalNote(result.note);
+      if (result.proposedQty !== null) setCounted(String(result.proposedQty));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setEstimating(false);
+    }
+  }
+
   async function confirm() {
     if (!target) return;
     setBusy(true);
@@ -74,8 +109,8 @@ export function CountFlow() {
           sku: target.sku,
           locationId: target.locationId,
           confirmedQty: Number(counted),
-          operatorId,
-          shiftId,
+          proposedQty: proposed,
+          photoPath,
         }),
       );
     } catch (e) {
@@ -90,7 +125,7 @@ export function CountFlow() {
     setBusy(true);
     setError(null);
     try {
-      setAdjusted(await api<{ newQty: number }>("/api/count/adjust", { countId: saved.id, operatorId, shiftId }));
+      setAdjusted(await api<{ newQty: number }>("/api/count/adjust", { countId: saved.id }));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -104,6 +139,10 @@ export function CountFlow() {
     setSaved(null);
     setAdjusted(null);
     setError(null);
+    setPhotoUrl(null);
+    setPhotoPath(null);
+    setProposed(null);
+    setProposalNote(null);
   }
 
   const errorBox = error ? (
@@ -135,12 +174,12 @@ export function CountFlow() {
               </p>
               {adjusted ? (
                 <StatusPill status="ok" label={`Stock adjusted to ${adjusted.newQty}`} />
-              ) : isSupervisor ? (
+              ) : canAdjust ? (
                 <Button variant="primary" icon="check" onClick={adjust} disabled={busy}>
                   Adjust stock to {saved.confirmedQty}
                 </Button>
               ) : (
-                <p className="text-sm text-soft">A supervisor must approve any stock adjustment.</p>
+                <p className="text-sm text-soft">A supervisor or inventory controller must approve any stock adjustment.</p>
               )}
             </div>
           ) : null}
@@ -191,6 +230,10 @@ export function CountFlow() {
                   onClick={() => {
                     setTarget(t);
                     setCounted("");
+                    setPhotoUrl(null);
+                    setPhotoPath(null);
+                    setProposed(null);
+                    setProposalNote(null);
                   }}
                   className={`flex min-h-16 flex-wrap items-center justify-between gap-x-4 rounded-control border px-4 py-2 text-left ${
                     selected ? "border-ink bg-signal" : "border-line-strong bg-surface hover:bg-sunk"
@@ -213,14 +256,68 @@ export function CountFlow() {
           <p className="mt-1 text-sm text-soft">
             Count what you can see at {target.locationId}. The expected quantity appears after you enter your count.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
+            <div>
+              <label
+                className={`inline-flex min-h-14 cursor-pointer items-center gap-2.5 rounded-control border border-line-strong bg-surface px-5 font-semibold hover:bg-sunk ${
+                  estimating ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
+                <Icon name="camera" size={22} />
+                {estimating ? "Looking at the photo…" : photoUrl ? "Take another photo" : "Take a photo to get a proposed count"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  aria-label="Shelf photo"
+                  disabled={estimating}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void estimate(file);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <p className="mt-2 text-sm text-soft">
+                Photograph the whole shelf straight on, in good light. You can always count by hand instead.
+              </p>
+              {estimating ? (
+                <div className="mt-3 space-y-2" aria-live="polite">
+                  <p className="text-sm text-soft">This can take up to a minute on this device.</p>
+                  <Skeleton className="h-5 w-1/2" />
+                </div>
+              ) : null}
+            </div>
+            {photoUrl ? (
+              <div className="flex flex-wrap items-start gap-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photoUrl} alt="The shelf you photographed" className="h-32 w-auto rounded-control border border-line" />
+                <div className="min-w-0 flex-1 basis-56" data-testid="proposal">
+                  {proposed !== null ? (
+                    <p className="flex items-start gap-2 font-medium">
+                      <Icon name="info" size={20} className="mt-0.5 shrink-0" />
+                      <span>
+                        The model proposes <strong data-testid="proposed-qty">{proposed}</strong>. It can be wrong. Check it
+                        against the shelf and correct it below.
+                      </span>
+                    </p>
+                  ) : proposalNote ? (
+                    <p className="flex items-start gap-2 font-medium text-warn">
+                      <Icon name="alert" size={20} className="mt-0.5 shrink-0" />
+                      <span>{proposalNote}</span>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <QuantityField label={`Counted ${target.name}`} value={counted} onChange={setCounted} />
           </div>
           {countedNumber !== null ? (
             <div className="mt-4 space-y-4">
               <VarianceBanner expected={target.expectedQty} counted={countedNumber} />
               <div className="flex flex-wrap gap-3">
-                <Button variant="primary" icon="check" onClick={confirm} disabled={busy || !ready}>
+                <Button variant="primary" icon="check" onClick={confirm} disabled={busy}>
                   {busy ? "Saving…" : "Confirm count"}
                 </Button>
                 <Button variant="quiet" onClick={reset} disabled={busy}>

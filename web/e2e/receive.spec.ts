@@ -1,13 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { resetAndSignIn, signInAs } from "./helpers";
 
-test.beforeEach(async ({ request }) => {
-  const response = await request.post("/api/admin/reseed");
-  expect(response.ok()).toBe(true);
+test.beforeEach(async ({ page }) => {
+  await resetAndSignIn(page, "amina");
 });
 
-async function enter(page: import("@playwright/test").Page, name: string, value: string) {
-  await page.getByRole("textbox", { name: `Received ${name}` }).fill(value);
-}
+const enter = (page: Page, name: string, value: string) =>
+  page.getByRole("textbox", { name: `Received ${name}` }).fill(value);
 
 test.describe("receiving", () => {
   test("the 150 versus 142 case shows missing 8 and saves only on confirm", async ({ page }) => {
@@ -52,5 +51,20 @@ test.describe("receiving", () => {
     await expect(field).toHaveValue("2");
     await page.getByRole("button", { name: "Decrease Received Safety Helmet" }).click();
     await expect(field).toHaveValue("1");
+  });
+
+  test("the discrepancy reaches the supervisor, attributed to the clerk", async ({ page }) => {
+    await page.goto("/receive");
+    await page.getByRole("radio", { name: /PO 4471/ }).click();
+    await enter(page, "Corrugated Carton 40x30x30", "142");
+    await enter(page, "Stretch Wrap Roll", "60");
+    await enter(page, "Packing Tape 48mm", "120");
+    await page.getByRole("button", { name: "Confirm receipt" }).click();
+    await expect(page.getByTestId("receipt-saved")).toBeVisible();
+
+    await signInAs(page, "daniel");
+    await page.goto("/supervisor");
+    const row = page.getByTestId("exception-list").locator("li", { hasText: "missing 8" }).first();
+    await expect(row).toContainText("Amina Otieno");
   });
 });

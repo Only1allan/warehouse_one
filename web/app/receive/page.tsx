@@ -1,4 +1,5 @@
-import { PageHeader, Panel } from "@/components/ui";
+import { ReceiveFlow } from "@/components/receive-flow";
+import { PageHeader } from "@/components/ui";
 
 export default function ReceivePage() {
   return (
@@ -7,12 +8,7 @@ export default function ReceivePage() {
         title="Receive"
         description="Check a delivery against its purchase order and see exactly what is missing or extra."
       />
-      <Panel>
-        <p className="text-soft">
-          Choose a purchase order, enter what actually arrived, and confirm the receipt. Stock only
-          changes when you confirm.
-        </p>
-      </Panel>
+      <ReceiveFlow />
     </>
   );
 }

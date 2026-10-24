@@ -1,6 +1,7 @@
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
-const port = Number(process.env.E2E_PORT ?? 3100);
+const port = Number(process.env.E2E_PORT ?? 3101);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -19,6 +20,7 @@ export default defineConfig({
     command: `npx next dev -p ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: true,
+    env: { WAREHOUSE_DB_PATH: path.join(__dirname, "data", "e2e.db") },
     timeout: 120_000,
   },
 });

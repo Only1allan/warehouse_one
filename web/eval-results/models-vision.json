@@ -1,0 +1,36 @@
+[
+  {
+    "role": "vision",
+    "candidate": "VISIONPSY_NANO_460M_MULTIMODAL_Q8_0",
+    "ok": true,
+    "baselineMB": 176,
+    "loadSeconds": 4.4,
+    "loadedMB": 1149,
+    "deltaMB": 973,
+    "metrics": {
+      "exactPct": 33.3,
+      "within1Pct": 33.3,
+      "meanAbsError": 9.3,
+      "unparsed": 0,
+      "meanSecondsPerImage": 79.51,
+      "trueVsAnswer": "6:6 12:12 18:16 24:12 31:12 35:12"
+    }
+  },
+  {
+    "role": "vision",
+    "candidate": "SMOLVLM2_500M_MULTIMODAL_Q8_0",
+    "ok": true,
+    "baselineMB": 143,
+    "loadSeconds": 4.6,
+    "loadedMB": 1155,
+    "deltaMB": 1012,
+    "metrics": {
+      "exactPct": 16.7,
+      "within1Pct": 50,
+      "meanAbsError": 4.3,
+      "unparsed": 0,
+      "meanSecondsPerImage": 17.36,
+      "trueVsAnswer": "6:5 12:12 18:19 24:15 31:21 35:30"
+    }
+  }
+]

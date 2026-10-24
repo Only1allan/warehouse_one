@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { useOperator } from "./operator-context";
 import { Skeleton } from "./ui";
+import { useEffect, useState } from "react";
 
 const destinations: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/ask", label: "Ask", icon: "ask" },
@@ -27,6 +28,52 @@ export function LocalBadge() {
         · nothing leaves this device
       </span>
     </div>
+  );
+}
+
+type Warm = { llm: boolean; embeddings: boolean; busy: boolean; problem: string | null };
+
+export function AiStatus() {
+  const [warm, setWarm] = useState<Warm | null>(null);
+
+  useEffect(() => {
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const response = await fetch("/api/readiness");
+        const data = (await response.json()) as { warm: Warm };
+        if (stopped) return;
+        setWarm(data.warm);
+        if (!(data.warm.llm && data.warm.embeddings) && !data.warm.problem) timer = setTimeout(poll, 3000);
+      } catch {
+        if (!stopped) timer = setTimeout(poll, 5000);
+      }
+    };
+    fetch("/api/readiness", { method: "POST" }).finally(() => void poll());
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const ready = warm?.llm && warm.embeddings;
+  const text = ready ? "AI ready" : warm?.problem ? "Set up AI" : "Preparing AI…";
+  const tone = ready
+    ? "border-ok/30 bg-ok-fill text-ok"
+    : warm?.problem
+      ? "border-warn/30 bg-warn-fill text-warn"
+      : "border-line-strong bg-sunk text-ink";
+  return (
+    <Link
+      href="/readiness"
+      data-testid="ai-status"
+      title={warm?.problem ?? "Models on this device"}
+      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold ${tone}`}
+    >
+      <Icon name={ready ? "cpu" : warm?.problem ? "alert" : "info"} size={20} />
+      {text}
+    </Link>
   );
 }
 
@@ -152,7 +199,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
             <span className="text-sm font-bold">Copilot</span>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <AiStatus />
             <LocalBadge />
           </div>
         </header>

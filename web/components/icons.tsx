@@ -54,6 +54,7 @@ const paths = {
   send: <path d="M4 12L20 4l-4.5 16-3.5-6.5L4 12Zm8 1.5L20 4" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  plus: <path d="M12 5v14M5 12h14" />,
   alert: (
     <>
       <path d="M12 4l9 16H3L12 4Z" />

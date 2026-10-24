@@ -1,0 +1,50 @@
+[
+  {
+    "role": "speech",
+    "candidate": "WHISPER_EN_TINY_Q8_0",
+    "ok": true,
+    "baselineMB": 139,
+    "loadSeconds": 7.8,
+    "loadedMB": 638,
+    "deltaMB": 499,
+    "metrics": {
+      "meanWerPct": 9.6,
+      "exactClips": 8,
+      "clips": 12,
+      "meanSecondsPerClip": 0.74,
+      "samples": "How many generators do we have? => How many graders do we have? | Where are the generators stored? => Where the generator stored. | What stock is below minimum levels? => What stock is below minimum levels?"
+    }
+  },
+  {
+    "role": "speech",
+    "candidate": "WHISPER_EN_BASE_Q8_0",
+    "ok": true,
+    "baselineMB": 140,
+    "loadSeconds": 3.5,
+    "loadedMB": 715,
+    "deltaMB": 575,
+    "metrics": {
+      "meanWerPct": 11.3,
+      "exactClips": 8,
+      "clips": 12,
+      "meanSecondsPerClip": 1.25,
+      "samples": "How many generators do we have? => How many graders do we have? | Where are the generators stored? => Where the generator is stored. | What stock is below minimum levels? => What stock is below minimum levels?"
+    }
+  },
+  {
+    "role": "speech",
+    "candidate": "PARAKEET_TDT_0_6B_V3_Q8_0",
+    "ok": true,
+    "baselineMB": 109,
+    "loadSeconds": 7.7,
+    "loadedMB": 1382,
+    "deltaMB": 1273,
+    "metrics": {
+      "meanWerPct": 4.2,
+      "exactClips": 9,
+      "clips": 12,
+      "meanSecondsPerClip": 0.48,
+      "samples": "How many generators do we have? => How many graders do we have? | Where are the generators stored? => Where are the generator stored? | What stock is below minimum levels? => What stock is below minimum levels?"
+    }
+  }
+]

@@ -1,18 +1,14 @@
-import { PageHeader, Panel } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
+import { SupervisorExceptions } from "@/components/supervisor-exceptions";
 
 export default function SupervisorPage() {
   return (
     <>
       <PageHeader
         title="Supervisor"
-        description="Exceptions raised on the floor, in one list."
+        description="Exceptions raised on the floor, in one list. Open a row to see the record behind it."
       />
-      <Panel>
-        <p className="text-soft">
-          Receiving discrepancies, count variances, dispatch shortfalls and equipment issues appear
-          here as they are recorded.
-        </p>
-      </Panel>
+      <SupervisorExceptions />
     </>
   );
 }

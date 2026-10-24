@@ -1,0 +1,36 @@
+[
+  {
+    "role": "embeddings",
+    "candidate": "EMBEDDINGGEMMA_300M_Q4_0",
+    "ok": true,
+    "baselineMB": 180,
+    "loadSeconds": 6.1,
+    "loadedMB": 1943,
+    "deltaMB": 1763,
+    "metrics": {
+      "chunks": 42,
+      "dimensions": 768,
+      "top1Pct": 91.7,
+      "top3Pct": 100,
+      "corpusEmbedSeconds": 6.55,
+      "meanQueryMs": 28
+    }
+  },
+  {
+    "role": "embeddings",
+    "candidate": "GTE_LARGE_FP16",
+    "ok": true,
+    "baselineMB": 191,
+    "loadSeconds": 5.7,
+    "loadedMB": 1370,
+    "deltaMB": 1179,
+    "metrics": {
+      "chunks": 42,
+      "dimensions": 1024,
+      "top1Pct": 100,
+      "top3Pct": 100,
+      "corpusEmbedSeconds": 28.58,
+      "meanQueryMs": 155
+    }
+  }
+]

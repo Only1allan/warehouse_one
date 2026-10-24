@@ -1,0 +1,18 @@
+# Local databases, uploads and model caches
+web/data/*.db
+web/data/*.db-*
+web/data/uploads/
+.qvac/
+*.gguf
+*.onnx
+
+# Test and tooling output
+web/test-results/
+web/playwright-report/
+web/eval-results/*.tmp
+.impeccable/*.png
+**/.impeccable/config.local.json
+**/.impeccable/live/sessions/
+
+# OS and editor
+.DS_Store

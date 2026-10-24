@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [{ source: "/", destination: "/ask", permanent: false }];
+  },
   serverExternalPackages: ["@qvac/sdk", "@qvac/inference"],
   experimental: {
-    agentFeedback: true,
+    agentFeedback: false,
   },
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

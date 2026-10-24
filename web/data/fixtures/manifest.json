@@ -1,0 +1,211 @@
+{
+  "notes": [
+    {
+      "file": "images/delivery-note-4471-clean.png",
+      "kind": "delivery_note",
+      "reference": "4471",
+      "party": "Kenya Packaging Ltd",
+      "lines": [
+        {
+          "sku": "100201",
+          "description": "Corrugated Carton 40x30x30",
+          "quantity": 150
+        },
+        {
+          "sku": "100305",
+          "description": "Stretch Wrap Roll",
+          "quantity": 60
+        },
+        {
+          "sku": "100410",
+          "description": "Packing Tape 48mm",
+          "quantity": 120
+        }
+      ]
+    },
+    {
+      "file": "images/delivery-note-4471-photo.png",
+      "kind": "delivery_note",
+      "reference": "4471",
+      "party": "Kenya Packaging Ltd",
+      "lines": [
+        {
+          "sku": "100201",
+          "description": "Corrugated Carton 40x30x30",
+          "quantity": 150
+        },
+        {
+          "sku": "100305",
+          "description": "Stretch Wrap Roll",
+          "quantity": 60
+        },
+        {
+          "sku": "100410",
+          "description": "Packing Tape 48mm",
+          "quantity": 120
+        }
+      ]
+    },
+    {
+      "file": "images/delivery-note-4472.png",
+      "kind": "delivery_note",
+      "reference": "4472",
+      "party": "SafeWorks East Africa",
+      "lines": [
+        {
+          "sku": "300118",
+          "description": "Hi-Vis Safety Vest",
+          "quantity": 80
+        },
+        {
+          "sku": "300125",
+          "description": "Safety Helmet",
+          "quantity": 40
+        }
+      ]
+    },
+    {
+      "file": "images/delivery-note-4473.png",
+      "kind": "delivery_note",
+      "reference": "4473",
+      "party": "Nairobi Industrial Supplies",
+      "lines": [
+        {
+          "sku": "001254",
+          "description": "Portable Generator 5kW",
+          "quantity": 10
+        },
+        {
+          "sku": "800120",
+          "description": "Angle Grinder 115mm",
+          "quantity": 20
+        }
+      ]
+    },
+    {
+      "file": "images/delivery-note-4474.png",
+      "kind": "delivery_note",
+      "reference": "4474",
+      "party": "ChemSupply Ltd",
+      "lines": [
+        {
+          "sku": "400210",
+          "description": "Industrial Cleaner 20L",
+          "quantity": 24
+        },
+        {
+          "sku": "400215",
+          "description": "Degreaser 5L",
+          "quantity": 36
+        }
+      ]
+    },
+    {
+      "file": "images/loading-sheet-5521.png",
+      "kind": "loading_sheet",
+      "reference": "5521",
+      "party": "Mombasa Hardware Ltd",
+      "lines": [
+        {
+          "sku": "600100",
+          "description": "Roofing Sheets (pallet of 100)",
+          "quantity": 50
+        }
+      ]
+    }
+  ],
+  "shelves": [
+    {
+      "file": "images/shelf-06.png",
+      "count": 6,
+      "synthetic": true
+    },
+    {
+      "file": "images/shelf-12.png",
+      "count": 12,
+      "synthetic": true
+    },
+    {
+      "file": "images/shelf-18.png",
+      "count": 18,
+      "synthetic": true
+    },
+    {
+      "file": "images/shelf-24.png",
+      "count": 24,
+      "synthetic": true
+    },
+    {
+      "file": "images/shelf-31.png",
+      "count": 31,
+      "synthetic": true
+    },
+    {
+      "file": "images/shelf-35.png",
+      "count": 35,
+      "synthetic": true
+    }
+  ],
+  "audio": [
+    {
+      "file": "audio/question-01.wav",
+      "transcript": "How many generators do we have?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-02.wav",
+      "transcript": "Where are the generators stored?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-03.wav",
+      "transcript": "What stock is below minimum levels?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-04.wav",
+      "transcript": "Show today's receiving schedule.",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-05.wav",
+      "transcript": "What should I do with damaged inventory?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-06.wav",
+      "transcript": "What PPE is required in Zone C?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-07.wav",
+      "transcript": "How do I process returns?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-08.wav",
+      "transcript": "How should chemicals be stored?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-09.wav",
+      "transcript": "Where can I find the safety helmets?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-10.wav",
+      "transcript": "What is on purchase order four four seven one?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-11.wav",
+      "transcript": "How many cartons are in stock?",
+      "sampleRate": 16000
+    },
+    {
+      "file": "audio/question-12.wav",
+      "transcript": "Give me the forklift inspection checklist.",
+      "sampleRate": 16000
+    }
+  ]
+}

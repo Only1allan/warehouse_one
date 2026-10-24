@@ -109,13 +109,13 @@ Cut order if behind: 18 (handover), then 17 (health), then 19 (dispatch). All ot
 
 **Status:** ready-for-agent
 
-- [ ] At least 8 SOP and safety documents with clear section headings.
-- [ ] Delivery-note images for at least 4 seeded POs, with a manifest of true fields.
-- [ ] A loading-sheet image for the 50-pallet order.
-- [ ] Shelf images with known counts, with the manifest of true counts.
-- [ ] At least 10 short audio clips with known transcripts.
-- [ ] A list of about 20 question-to-expected-tool cases for tool-selection evaluation.
-- [ ] Instructions say where the user can add real photos.
+- [x] At least 8 SOP and safety documents with clear section headings.
+- [x] Delivery-note images for at least 4 seeded POs, with a manifest of true fields.
+- [x] A loading-sheet image for the 50-pallet order.
+- [x] Shelf images with known counts, with the manifest of true counts.
+- [x] At least 10 short audio clips with known transcripts.
+- [x] A list of about 20 question-to-expected-tool cases for tool-selection evaluation.
+- [x] Instructions say where the user can add real photos.
 
 ---
 
@@ -143,11 +143,11 @@ Cut order if behind: 18 (handover), then 17 (health), then 19 (dispatch). All ot
 
 **Status:** ready-for-agent
 
-- [ ] Operator and shift selection persists across navigation and attributes later events.
-- [ ] The four navigation destinations exist and are reachable with large touch targets.
-- [ ] The "100% local" badge is visible on every screen.
-- [ ] No page requests any external origin.
-- [ ] Design tokens for status colours (OK, warning, discrepancy) are defined and used.
+- [x] Operator and shift selection persists across navigation and attributes later events.
+- [x] The four navigation destinations exist and are reachable with large touch targets.
+- [x] The "100% local" badge is visible on every screen.
+- [x] No page requests any external origin.
+- [x] Design tokens for status colours (OK, warning, discrepancy) are defined and used.
 
 ---
 

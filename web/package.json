@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "reseed": "tsx scripts/reseed.ts",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fixtures": "tsx scripts/make-fixtures.mts"
   },
   "dependencies": {
     "@qvac/sdk": "^0.22.0",

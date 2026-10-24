@@ -1,26 +1,162 @@
 @import "tailwindcss";
 
+/*
+  Warehouse floor design tokens.
+  Scene: operator in a bright warehouse, gloved hands, tablet or shared laptop.
+  Light theme, warm concrete neutrals, safety-yellow fills (never as text), ink on top.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f2f0ea;
+  --surface: #fbfaf6;
+  --surface-sunk: #e9e6dd;
+  --ink: #1b1a17;
+  --ink-soft: #55514a;
+  --line: #d6d1c4;
+  --line-strong: #b4ad9c;
+
+  --signal: #ffc400;
+  --signal-press: #e6b000;
+  --signal-ink: #1b1a17;
+
+  --ok-ink: #1c5e35;
+  --ok-fill: #e1f1e6;
+  --warn-ink: #7a4300;
+  --warn-fill: #ffecc7;
+  --bad-ink: #9b1d18;
+  --bad-fill: #fbe2df;
+  --info-ink: #1f4b73;
+  --info-fill: #e0ecf7;
+
+  --radius-control: 0.625rem;
+  --radius-panel: 0.875rem;
+  --shadow-panel: 0 1px 2px rgb(27 26 23 / 0.06), 0 6px 18px rgb(27 26 23 / 0.07);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --nav-width: 16.5rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunk: var(--surface-sunk);
+  --color-ink: var(--ink);
+  --color-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-signal: var(--signal);
+  --color-signal-press: var(--signal-press);
+  --color-ok: var(--ok-ink);
+  --color-ok-fill: var(--ok-fill);
+  --color-warn: var(--warn-ink);
+  --color-warn-fill: var(--warn-fill);
+  --color-bad: var(--bad-ink);
+  --color-bad-fill: var(--bad-fill);
+  --color-info: var(--info-ink);
+  --color-info-fill: var(--info-fill);
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+  --radius-control: var(--radius-control);
+  --radius-panel: var(--radius-panel);
+  --shadow-panel: var(--shadow-panel);
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: var(--line-strong) var(--canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100dvh;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  caret-color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--signal-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 3px solid var(--canvas);
+}
+
+button,
+a,
+select,
+input,
+textarea {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: #6f6a5e;
+    --ink-soft: #2d2b26;
+  }
+}
+
+@keyframes skeleton {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-sunk) 35%, var(--surface) 50%, var(--surface-sunk) 65%);
+  background-size: 200% 100%;
+  animation: skeleton 1.4s linear infinite;
+  border-radius: var(--radius-control);
 }

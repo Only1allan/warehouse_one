@@ -91,13 +91,13 @@ Cut order if behind: 18 (handover), then 17 (health), then 19 (dispatch). All ot
 
 **Status:** ready-for-agent
 
-- [ ] A real local LLM streams a completion into the browser through the Next.js server.
-- [ ] Works with the network off once models are cached (verified and recorded).
-- [ ] Hot reload does not reload the model.
-- [ ] Cancelling a generation stops it.
-- [ ] ModelPort interface and fake exist, and a test exercises the fake.
-- [ ] Decision recorded: in-process or fallback service, with the reason. If fallback, it is working.
-- [ ] Next.js docs in the project were read before writing server code, and any configuration needed for native packages is in place.
+- [x] A real local LLM streams a completion into the browser through the Next.js server.
+- [x] Works with the network off once models are cached (verified and recorded).
+- [x] Hot reload does not reload the model.
+- [x] Cancelling a generation stops it.
+- [x] ModelPort interface and fake exist, and a test exercises the fake.
+- [x] Decision recorded: in-process or fallback service, with the reason. If fallback, it is working.
+- [x] Next.js docs in the project were read before writing server code, and any configuration needed for native packages is in place.
 
 ---
 

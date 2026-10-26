@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: warehouse-copilot
+    ports:
+      - "3000:3000"
+    environment:
+      # Required: a long random value keeps sessions valid across restarts.
+      # Generate one with: openssl rand -hex 32
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env or the shell}
+      DEMO_ACCOUNTS: ${DEMO_ACCOUNTS:-on}
+    volumes:
+      # SQLite, uploaded photos and ~3 GB of QVAC models.
+      - warehouse-data:/data
+    restart: unless-stopped
+    # SQLite and local models are single-instance. Give the container enough RAM.
+    mem_limit: 8g
+    shm_size: 512m
+
+volumes:
+  warehouse-data:

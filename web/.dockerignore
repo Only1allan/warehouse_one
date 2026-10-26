@@ -1,0 +1,24 @@
+node_modules
+.next
+.next-e2e
+.next-offline
+coverage
+playwright-report
+test-results
+eval-results
+*.tsbuildinfo
+next-env.d.ts
+
+# Runtime state must never be baked into the image. It lives on the /data volume.
+data/*.db
+data/*.db-*
+data/uploads
+data/certs
+data/.session-secret
+
+.env
+.env.*
+.git
+.gitignore
+Dockerfile
+docker-compose.yml

@@ -52,6 +52,18 @@ These are demo accounts for synthetic data only. They are shown on the sign-in p
 
 For development: `npm run dev`. To reset the demo data: `npm run reseed`.
 
+## Deploy it
+
+This is not a Vercel app. It needs a long-running Node server with a persistent disk, because SQLite, uploaded photos and the ~3 GB of QVAC models all live on the local filesystem. Vercel's serverless functions have a read-only, ephemeral filesystem, so the database cannot survive there.
+
+Deploy the `web` folder to a container host or VPS with 8 GB of RAM and a 20 GB disk:
+
+- **Render:** apply the included `render.yaml`.
+- **Fly.io:** use `web/Dockerfile` with a volume mounted at `/data`.
+- **Any Docker host:** `docker compose up -d --build` from `web/`.
+
+The database is created and seeded automatically on first request; never commit or upload `warehouse.db`. The first AI use downloads the models once onto the volume. Full steps, environment variables, backups and troubleshooting are in [docs/07-deployment.md](docs/07-deployment.md).
+
 ## Offline
 
 - **Laptop:** prepare once, turn Wi-Fi off, keep using `http://localhost:3000`.

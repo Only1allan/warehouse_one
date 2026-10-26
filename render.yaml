@@ -1,0 +1,30 @@
+# Render Blueprint for the whole app.
+#
+# The app is a single Node server, not a static site: SQLite, uploaded photos
+# and the QVAC model cache all need a persistent disk. The disk also means the
+# service must stay at one instance (no autoscaling).
+services:
+  - type: web
+    name: warehouse-copilot
+    runtime: docker
+    plan: 2c-8g
+    region: frankfurt
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    disk:
+      name: warehouse-data
+      mountPath: /data
+      sizeGB: 20
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEMO_ACCOUNTS
+        value: "on"
+      - key: HOME
+        value: /data/home
+      - key: WAREHOUSE_DB_PATH
+        value: /data/warehouse.db
+      - key: WAREHOUSE_UPLOAD_DIR
+        value: /data

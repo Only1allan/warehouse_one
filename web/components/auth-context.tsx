@@ -60,8 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let alive = true;
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!alive) return;
+        setUser(data.user);
+        setShiftId(data.shiftId);
+        setShifts(data.shifts ?? []);
+        setStatus("ready");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const signIn = useCallback(
     async (username: string, password: string, chosenShift?: string) => {

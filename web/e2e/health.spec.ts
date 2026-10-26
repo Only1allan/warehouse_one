@@ -1,14 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { resetAndSignIn } from "./helpers";
 
-for (const username of ["daniel", "esther", "kevin"]) {
-  test(`inventory health is available to ${username}`, async ({ page }) => {
+test("inventory alerts belong to the supervisor", async ({ page }) => {
+  await resetAndSignIn(page, "daniel");
+  await page.goto("/health");
+  await expect(page.getByTestId("health-count-all")).not.toHaveText("0");
+  for (const username of ["amina", "esther", "kevin"]) {
     await resetAndSignIn(page, username);
     await page.goto("/health");
-    await expect(page.getByTestId("health-list")).toBeVisible();
-    await expect(page.getByTestId("health-count-all")).not.toHaveText("0");
-  });
-}
+    await expect(page.getByTestId("not-available")).toBeVisible();
+  }
+});
 
 test.describe("inventory health", () => {
   test.beforeEach(async ({ page }) => {
@@ -22,7 +24,7 @@ test.describe("inventory health", () => {
     }
     await expect(page.getByTestId("health-list")).toContainText("Product P-324 has not moved in");
     await expect(page.getByTestId("health-list")).toContainText("Consider promotion or transfer.");
-    await expect(page.getByTestId("health-list")).toContainText("Reorder now.");
+    await expect(page.getByTestId("health-list")).toContainText("is at or below its minimum");
   });
 
   test("filters by category", async ({ page }) => {

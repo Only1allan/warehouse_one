@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { capabilityForPath, navFor } from "@/lib/auth/capabilities";
+import { capabilityForPath, navFor, ROLE_NAV } from "@/lib/auth/capabilities";
 import { useAuth } from "./auth-context";
 import { Icon, type IconName } from "./icons";
 import { Skeleton } from "./ui";
@@ -124,38 +124,55 @@ function NavLinks({ orientation }: { orientation: "rail" | "bar" }) {
   const pathname = usePathname();
   const { user } = useAuth();
   if (!user) return null;
-  const items = navFor(user.role);
-  return (
-    <nav
-      aria-label="Main"
-      className={
-        orientation === "rail"
-          ? "flex flex-col gap-1.5 overflow-y-auto"
-          : "flex gap-1 overflow-x-auto px-2 py-2"
-      }
-    >
-      {items.map((d) => {
-        const active = pathname === d.href || pathname.startsWith(`${d.href}/`);
-        return (
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  if (orientation === "bar") {
+    return (
+      <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-2 py-2">
+        {navFor(user.role).map((d) => (
           <Link
             key={d.href}
             href={d.href}
-            aria-current={active ? "page" : undefined}
-            className={
-              orientation === "rail"
-                ? `flex min-h-14 shrink-0 items-center gap-3.5 rounded-control px-4 text-base font-semibold ${
-                    active ? "bg-signal text-ink shadow-[0_1px_0_rgb(27_26_23/0.2)]" : "text-ink hover:bg-sunk"
-                  }`
-                : `flex min-h-16 min-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-control px-2 text-xs font-semibold ${
-                    active ? "bg-signal text-ink" : "text-ink hover:bg-sunk"
-                  }`
-            }
+            aria-current={isActive(d.href) ? "page" : undefined}
+            className={`flex min-h-16 min-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-control px-2 text-center text-xs font-semibold ${
+              isActive(d.href) ? "bg-signal text-ink" : "text-ink hover:bg-sunk"
+            }`}
           >
-            <Icon name={d.icon as IconName} size={orientation === "rail" ? 24 : 22} />
+            <Icon name={d.icon as IconName} size={22} />
             {d.label}
           </Link>
-        );
-      })}
+        ))}
+      </nav>
+    );
+  }
+
+  return (
+    <nav aria-label="Main" className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1" data-testid="role-nav" data-role={user.role}>
+      {ROLE_NAV[user.role].map((group) => (
+        <div key={group.need}>
+          {group.items.length > 1 || group.need !== group.items[0]?.label ? (
+            <h2 className="mb-1.5 px-4 text-xs font-semibold text-soft" data-testid="nav-need">
+              {group.need}
+            </h2>
+          ) : null}
+          <ul className="flex flex-col gap-1">
+            {group.items.map((d) => (
+              <li key={d.href}>
+                <Link
+                  href={d.href}
+                  aria-current={isActive(d.href) ? "page" : undefined}
+                  className={`flex min-h-14 items-center gap-3.5 rounded-control px-4 text-base font-semibold ${
+                    isActive(d.href) ? "bg-signal text-ink shadow-[0_1px_0_rgb(27_26_23/0.2)]" : "text-ink hover:bg-sunk"
+                  }`}
+                >
+                  <Icon name={d.icon as IconName} size={24} />
+                  {d.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }
@@ -218,6 +235,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <NavLinks orientation="rail" />
         <div className="mt-auto border-t border-line pt-4">
+          <div className="mb-3 rounded-control bg-sunk px-3 py-2 text-xs font-semibold" data-testid="role-badge">
+            {user.title}
+          </div>
           <UserPanel />
         </div>
       </aside>

@@ -25,6 +25,8 @@ export interface AskRequest {
   toolChoice?: "auto" | "required" | "none" | string;
   maxTokens?: number;
   signal?: AbortSignal;
+  /** Reuse the model's attention cache for prompts that share a prefix (for example the routing prompt). */
+  cacheKey?: string;
 }
 
 export type AskEvent =

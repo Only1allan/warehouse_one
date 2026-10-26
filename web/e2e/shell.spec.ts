@@ -8,7 +8,7 @@ test.describe("signed-in shell", () => {
   });
 
   test("shows the 100% local badge on every operator screen", async ({ page }) => {
-    for (const path of ["/home", "/ask", "/receive", "/count", "/dispatch", "/readiness"]) {
+    for (const path of ["/home", "/ask", "/safety", "/voice", "/receive", "/count", "/dispatch", "/readiness"]) {
       await page.goto(path);
       await expect(page.getByTestId("local-badge")).toBeVisible();
       await expect(page.getByTestId("local-badge")).toContainText("100% local");
@@ -33,7 +33,7 @@ test.describe("signed-in shell", () => {
   test("the shift choice persists across navigation and reload", async ({ page }) => {
     await page.goto("/home");
     await page.getByLabel("Shift").first().selectOption("s-night");
-    await page.getByRole("link", { name: "Count" }).first().click();
+    await page.getByRole("link", { name: "Count a shelf" }).first().click();
     await expect(page.getByLabel("Shift").first()).toHaveValue("s-night");
     await page.reload();
     await expect(page.getByLabel("Shift").first()).toHaveValue("s-night");
@@ -67,7 +67,7 @@ test.describe("signed-in shell", () => {
     await page.goto("/home");
     await expect(page.getByTestId("local-badge")).toBeVisible();
     const bottom = page.getByRole("navigation", { name: "Main" }).last();
-    await expect(bottom.getByRole("link", { name: "Receive" })).toBeVisible();
+    await expect(bottom.getByRole("link", { name: "Receive delivery" })).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
   });

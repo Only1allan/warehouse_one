@@ -31,7 +31,7 @@
   --radius-panel: 0.875rem;
   --shadow-panel: 0 1px 2px rgb(27 26 23 / 0.06), 0 6px 18px rgb(27 26 23 / 0.07);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --nav-width: 16.5rem;
+  --nav-width: 17.5rem;
 }
 
 @theme inline {

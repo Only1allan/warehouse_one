@@ -83,12 +83,23 @@ describe("role home dashboards", () => {
     expect(home.belowMinimum).toBeGreaterThanOrEqual(2);
     expect(home.health.dead).toBeGreaterThanOrEqual(2);
     expect(home.pendingReconciliations).toBe(1);
+    expect(home.today).toEqual({ receipts: 0, dispatches: 0, counts: 0, issues: 0 });
+  });
+
+  it("supervisor: today's operations feed shows who did what", () => {
+    const local = freshDb();
+    confirmCount(local, { now: FIXED_NOW }, { sku: "200310", locationId: "A-2-1", confirmedQty: 31, operatorId: "o-amina", shiftId: "s-morning" });
+    const home = getHome(local, { id: "o-daniel", role: "supervisor" }, FIXED_NOW);
+    if (home.kind !== "supervisor") throw new Error("wrong home");
+    expect(home.today.counts).toBe(1);
+    expect(home.feed[0]).toMatchObject({ summary: "Confirmed a count", who: "Amina Otieno" });
   });
 
   it("inventory controller: reconciliations waiting and count accuracy", () => {
     const home = getHome(db, { id: "o-esther", role: "inventory_controller" }, FIXED_NOW);
     if (home.kind !== "inventory_controller") throw new Error("wrong home");
     expect(home).toMatchObject({ pendingReconciliations: 1, countsDone: 2, countAccuracyPct: 50 });
+    expect(home.nextToCount).toHaveLength(3);
   });
 
   it("logistics manager: open orders, dispatch accuracy and shortfalls", () => {

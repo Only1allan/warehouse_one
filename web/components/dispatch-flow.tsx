@@ -20,7 +20,7 @@ export function DispatchFlow() {
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [loaded, setLoaded] = useState<Record<string, string>>({});
-  const [report, setReport] = useState<DispatchReport | null>(null);
+  const [storedReport, setReport] = useState<DispatchReport | null>(null);
   const [sheet, setSheet] = useState<ExtractedDocument | null>(null);
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,8 +36,14 @@ export function DispatchFlow() {
   }, []);
 
   useEffect(() => {
-    void loadOrders();
-  }, [loadOrders]);
+    let alive = true;
+    fetch("/api/dispatch/orders")
+      .then((r) => r.json())
+      .then((data) => alive && setOrders(data), (e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function choose(orderNumber: string) {
     setError(null);
@@ -68,12 +74,10 @@ export function DispatchFlow() {
   }
 
   const allEntered = order ? order.lines.every((l) => (loaded[l.sku] ?? "") !== "") : false;
+  const report = order && allEntered ? storedReport : null;
 
   useEffect(() => {
-    if (!order || !allEntered) {
-      setReport(null);
-      return;
-    }
+    if (!order || !allEntered) return;
     const handle = setTimeout(async () => {
       try {
         setReport(

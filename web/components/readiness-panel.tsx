@@ -36,8 +36,14 @@ export function ReadinessPanel() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let alive = true;
+    fetch("/api/readiness")
+      .then((r) => r.json())
+      .then((data) => alive && setModels(data.models as ModelStatus[]));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function prepare() {
     setRunning(true);

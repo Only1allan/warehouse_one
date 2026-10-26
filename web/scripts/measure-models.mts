@@ -55,7 +55,7 @@ interface Result {
 }
 const results: Result[] = [];
 
-async function measure<T>(
+async function measure(
   role: string,
   candidate: string,
   load: () => Promise<string>,

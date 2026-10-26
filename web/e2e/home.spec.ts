@@ -38,12 +38,11 @@ test.describe("role home dashboards", () => {
 
   test("each role gets a different navigation", async ({ page }) => {
     const expected: Record<string, { has: string[]; hasNot: string[] }> = {
-      amina: { has: ["Receive", "Count", "Dispatch"], hasNot: ["Stock records", "Shipments", "Shift handover"] },
-      daniel: { has: ["Exceptions", "Inventory health", "Shift handover", "Stock records"], hasNot: [] },
-      esther: { has: ["Stock records", "Count", "Inventory health"], hasNot: ["Receive", "Dispatch", "Shift handover"] },
-      kevin: { has: ["Dispatch", "Shipments", "Shift handover", "Inventory health"], hasNot: ["Count", "Receive", "Stock records"] },
+      amina: { has: ["Ask the copilot", "Safety", "Hands-free", "Receive delivery", "Count a shelf", "Check a load"], hasNot: ["Stock records", "Shipments", "Exceptions"] },
+      daniel: { has: ["Operations overview", "Exceptions", "Inventory alerts", "Stock approvals", "Shift handover"], hasNot: ["Receive delivery", "Count a shelf", "Stock records", "Shipments"] },
+      esther: { has: ["Stock records", "Count plan", "Cycle count", "Reconciliation"], hasNot: ["Receive delivery", "Check a load", "Exceptions", "Shift handover"] },
+      kevin: { has: ["Dispatch accuracy", "Check a load", "Shipments", "Compliance", "Shift handover"], hasNot: ["Count a shelf", "Receive delivery", "Stock records", "Exceptions"] },
     };
-    await resetAndSignIn(page, "amina");
     for (const [username, want] of Object.entries(expected)) {
       await resetAndSignIn(page, username);
       await page.goto("/home");

@@ -37,13 +37,26 @@ test.describe("counting", () => {
     await expect(page.getByText("Stock adjusted to 31")).toBeVisible();
   });
 
-  test("a supervisor can adjust stock after the count", async ({ page }) => {
-    await resetAndSignIn(page, "daniel");
+  test("a supervisor approves the variance from Stock approvals", async ({ page }) => {
+    await resetAndSignIn(page, "amina");
     await pickHoseKit(page);
     await page.getByRole("textbox", { name: "Counted Hydraulic Hose Kit" }).fill("31");
     await page.getByRole("button", { name: "Confirm count" }).click();
-    await page.getByRole("button", { name: "Adjust stock to 31" }).click();
-    await expect(page.getByText("Stock adjusted to 31")).toBeVisible();
+    await expect(page.getByTestId("count-saved")).toBeVisible();
+    await signInAs(page, "daniel");
+    await page.goto("/approvals");
+    await page.getByRole("button", { name: "Approve: set stock to 31" }).click();
+    await expect(page.getByText("Stock adjusted").first()).toBeVisible();
+  });
+
+  test("the count plan sends the controller straight to the right shelf", async ({ page }) => {
+    await resetAndSignIn(page, "esther");
+    await page.goto("/count-plan");
+    const first = page.getByTestId("count-plan").locator("li").first();
+    await expect(first).toBeVisible();
+    await first.getByRole("link", { name: "Count now" }).click();
+    await expect(page).toHaveURL(/\/count\?q=/);
+    await expect(page.getByRole("radio").first()).toBeVisible();
   });
 
   test("a matching count needs no adjustment", async ({ page }) => {
@@ -63,8 +76,7 @@ test.describe("counting", () => {
     await page.getByRole("button", { name: "Confirm count" }).click();
     await expect(page.getByTestId("count-saved")).toBeVisible();
     await signInAs(page, "esther");
-    await page.goto("/stock");
-    await page.getByRole("tab", { name: "Reconciliation" }).click();
+    await page.goto("/reconciliation");
     await expect(page.getByTestId("pending-list")).toContainText("Hydraulic Hose Kit at A-2-1");
   });
 });

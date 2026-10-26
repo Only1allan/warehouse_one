@@ -6,6 +6,7 @@ import type { Home } from "@/lib/services/home";
 import { api } from "@/lib/api-client";
 import { useAuth } from "./auth-context";
 import { Icon, type IconName } from "./icons";
+import { ReportIssue } from "./report-issue";
 import { Panel, Skeleton, StatusPill } from "./ui";
 
 function AttentionRow({
@@ -124,9 +125,14 @@ export function HomeDashboard() {
           <Section title="Quick actions">
             <ul className="divide-y divide-line">
               <AttentionRow href="/ask" icon="ask" label="Ask a question" count="" hint="Stock, locations and procedures" />
+              <AttentionRow href="/voice" icon="mic" label="Hands-free" count="" hint="Ask by voice while you work" />
+              <AttentionRow href="/safety" icon="shield" label="Safety" count="" hint="PPE, chemicals, forklifts and lifting" />
               <AttentionRow href="/receive" icon="receive" label="Receive a delivery" count="" hint="Check it against the purchase order" />
               <AttentionRow href="/count" icon="count" label="Count a shelf" count="" hint="By hand or from a photo" />
             </ul>
+          </Section>
+          <Section title="Report an equipment issue">
+            <ReportIssue />
           </Section>
           <Section title="Your recent actions">
             {home.recent.length === 0 ? (
@@ -152,14 +158,44 @@ export function HomeDashboard() {
       <div>
         {greeting}
         <div className="grid gap-6 lg:grid-cols-2">
+          <Section title="Today on the floor">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 py-2 sm:grid-cols-4" data-testid="today">
+              {[
+                ["Receipts", home.today.receipts],
+                ["Dispatches", home.today.dispatches],
+                ["Counts", home.today.counts],
+                ["Issues", home.today.issues],
+              ].map(([label, value]) => (
+                <div key={label as string}>
+                  <dt className="text-sm text-soft">{label}</dt>
+                  <dd className="text-2xl font-bold">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <h3 className="mt-3 text-sm font-semibold text-soft">Latest activity</h3>
+            {home.feed.length === 0 ? (
+              <p className="py-3 text-soft">Nothing has been confirmed yet today.</p>
+            ) : (
+              <ul className="divide-y divide-line" data-testid="feed">
+                {home.feed.map((f, i) => (
+                  <li key={i} className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-2.5">
+                    <span>
+                      <span className="font-semibold">{f.who}</span> · {f.summary}
+                    </span>
+                    <span className="text-sm text-soft">{f.at.slice(11, 16)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
           <Section title="Needs your attention">
             <ul className="divide-y divide-line">
               <AttentionRow href="/supervisor" icon="alert" label="Open exceptions" count={home.openExceptions} tone={home.openExceptions ? "bad" : "ok"} hint="Receiving, counts, dispatch and equipment" />
-              <AttentionRow href="/stock" icon="count" label="Counts waiting for a decision" count={home.pendingReconciliations} tone={home.pendingReconciliations ? "warn" : "ok"} hint="Approve or decline the stock adjustment" />
+              <AttentionRow href="/approvals" icon="check" label="Counts waiting for a decision" count={home.pendingReconciliations} tone={home.pendingReconciliations ? "warn" : "ok"} hint="Approve or decline the stock adjustment" />
               <AttentionRow href="/health" icon="pulse" label="Products at or below minimum" count={home.belowMinimum} tone={home.belowMinimum ? "warn" : "ok"} hint="Reorder before they run out" />
             </ul>
           </Section>
-          <Section title="Inventory health">
+          <Section title="Inventory alerts">
             <ul className="divide-y divide-line">
               <AttentionRow href="/health" icon="pulse" label="Dead stock" count={home.health.dead} hint="No movement for 90 days or more" />
               <AttentionRow href="/health" icon="pulse" label="Slow moving" count={home.health.slow} hint="No movement for 30 days or more" />
@@ -182,23 +218,36 @@ export function HomeDashboard() {
       <div>
         {greeting}
         <div className="grid gap-6 lg:grid-cols-2">
+          <Section title="Count next">
+            {home.nextToCount.length === 0 ? (
+              <p className="py-3 text-soft">Every location has been counted recently.</p>
+            ) : (
+              <ul className="divide-y divide-line" data-testid="next-to-count">
+                {home.nextToCount.map((n) => (
+                  <li key={`${n.sku}-${n.locationId}`} className="py-3">
+                    <Link href={`/count?q=${encodeURIComponent(n.sku)}`} className="font-semibold underline underline-offset-4">
+                      {n.locationId} · {n.name}
+                    </Link>
+                    <div className="text-sm text-soft">{n.reasons.join(" · ")}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link href="/count-plan" className="mt-2 inline-block font-semibold underline underline-offset-4">
+              See the whole count plan
+            </Link>
+          </Section>
           <Section title="Reconciliation">
             <ul className="divide-y divide-line">
-              <AttentionRow href="/stock" icon="count" label="Counts waiting for a decision" count={home.pendingReconciliations} tone={home.pendingReconciliations ? "warn" : "ok"} hint="Approve or decline each variance" />
+              <AttentionRow href="/reconciliation" icon="check" label="Counts waiting for a decision" count={home.pendingReconciliations} tone={home.pendingReconciliations ? "warn" : "ok"} hint="Approve or decline each variance" />
               <AttentionRow href="/count" icon="count" label="Counts done" count={home.countsDone} hint={`Count accuracy ${pct(home.countAccuracyPct)}`} />
             </ul>
           </Section>
           <Section title="Accuracy risks">
             <ul className="divide-y divide-line">
-              <AttentionRow href="/health" icon="pulse" label="Dead stock" count={home.health.dead} />
-              <AttentionRow href="/health" icon="pulse" label="Slow moving" count={home.health.slow} />
-              <AttentionRow href="/health" icon="pulse" label="Stockout risk" count={home.health.stockout} tone={home.health.stockout ? "warn" : "ok"} />
-            </ul>
-          </Section>
-          <Section title="Quick actions">
-            <ul className="divide-y divide-line">
-              <AttentionRow href="/stock" icon="shelf" label="Search stock records" count="" hint="Movement history for every product" />
-              <AttentionRow href="/count" icon="count" label="Start a cycle count" count="" />
+              <AttentionRow href="/stock" icon="shelf" label="Dead stock" count={home.health.dead} hint="Check these records are still right" />
+              <AttentionRow href="/stock" icon="shelf" label="Slow moving" count={home.health.slow} />
+              <AttentionRow href="/count-plan" icon="note" label="Stockout risk" count={home.health.stockout} tone={home.health.stockout ? "warn" : "ok"} hint="Low stock is counted first" />
             </ul>
           </Section>
         </div>
@@ -213,12 +262,12 @@ export function HomeDashboard() {
         <Section title="Shipments">
           <ul className="divide-y divide-line">
             <AttentionRow href="/shipments" icon="truck" label="Orders waiting to go out" count={home.openOrders} />
-            <AttentionRow href="/shipments" icon="send" label="Dispatch accuracy" count={pct(home.dispatchAccuracyPct)} tone={home.dispatchAccuracyPct === 100 ? "ok" : "warn"} hint={`${home.dispatches} dispatches, ${home.shortfalls} with a shortfall`} />
+            <AttentionRow href="/accuracy" icon="send" label="Dispatch accuracy" count={pct(home.dispatchAccuracyPct)} tone={home.dispatchAccuracyPct === 100 ? "ok" : "warn"} hint={`${home.dispatches} dispatches, ${home.shortfalls} with a shortfall`} />
           </ul>
         </Section>
         <Section title="Process compliance">
           <ul className="divide-y divide-line">
-            <AttentionRow href="/shipments" icon="receive" label="Receipts with no discrepancy" count={pct(home.receiptCleanPct)} tone={home.receiptCleanPct === 100 ? "ok" : "warn"} />
+            <AttentionRow href="/compliance" icon="receive" label="Receipts with no discrepancy" count={pct(home.receiptCleanPct)} tone={home.receiptCleanPct === 100 ? "ok" : "warn"} />
           </ul>
         </Section>
         <Section title="Quick actions">

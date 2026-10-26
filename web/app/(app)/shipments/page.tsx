@@ -1,11 +1,11 @@
-import { ShipmentsDashboard } from "@/components/shipments-dashboard";
+import { ShipmentList } from "@/components/shipments-dashboard";
 import { PageHeader } from "@/components/ui";
 
 export default function Page() {
   return (
     <>
-      <PageHeader title="Shipments" description="Follow orders out of the door, and see how accurately they leave." />
-      <ShipmentsDashboard />
+      <PageHeader title="Shipments" description="Every order, where it is going, and whether it left in full." />
+      <ShipmentList />
     </>
   );
 }

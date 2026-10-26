@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { can, capabilityForPath, CAPABILITIES, navFor, ROLES, type Capability } from "@/lib/auth/capabilities";
+import { can, capabilityForPath, CAPABILITIES, navFor, ROLE_NAV, ROLES, type Capability, type Role } from "@/lib/auth/capabilities";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createSessionToken, verifySessionToken } from "@/lib/auth/session-token";
 
@@ -72,32 +72,55 @@ describe("roles and capabilities", () => {
   });
 
   it.each<[Capability, string[]]>([
-    ["receive", ["operator", "supervisor"]],
-    ["count", ["operator", "supervisor", "inventory_controller"]],
+    ["receive", ["operator"]],
+    ["count", ["operator", "inventory_controller"]],
+    ["dispatch", ["operator", "logistics_manager"]],
+    ["stock_records", ["inventory_controller"]],
+    ["count_plan", ["inventory_controller"]],
     ["stock_adjust", ["supervisor", "inventory_controller"]],
-    ["dispatch", ["operator", "supervisor", "logistics_manager"]],
+    ["exceptions_view", ["supervisor"]],
+    ["health_view", ["supervisor"]],
+    ["shipments_view", ["logistics_manager"]],
+    ["logistics_metrics", ["logistics_manager"]],
     ["handover", ["supervisor", "logistics_manager"]],
     ["admin_reseed", ["supervisor"]],
   ])("%s belongs to exactly %j", (capability, roles) => {
     expect([...CAPABILITIES[capability]].sort()).toEqual([...roles].sort());
   });
 
-  it("gives each persona a navigation made for their job", () => {
-    const labels = (role: Parameters<typeof navFor>[0]) => navFor(role).map((n) => n.label);
-    expect(labels("operator")).toEqual(["Home", "Ask", "Receive", "Count", "Dispatch"]);
-    expect(labels("inventory_controller")).toContain("Stock records");
-    expect(labels("inventory_controller")).not.toContain("Receive");
-    expect(labels("logistics_manager")).toEqual(
-      expect.arrayContaining(["Dispatch", "Shipments", "Inventory health", "Shift handover"]),
-    );
-    expect(labels("logistics_manager")).not.toContain("Count");
-    expect(labels("supervisor").length).toBe(navFor("supervisor").length);
-    expect(labels("supervisor")).toContain("Exceptions");
+  it("groups each sidebar by the needs listed for that persona in the brief", () => {
+    const needs = (role: Role) => ROLE_NAV[role].map((g) => g.need);
+    expect(needs("operator")).toEqual(expect.arrayContaining(["Quick access to information", "Voice interaction", "Inventory verification"]));
+    expect(needs("supervisor")).toEqual(expect.arrayContaining(["Operational visibility", "Exception reporting", "Inventory alerts"]));
+    expect(needs("inventory_controller")).toEqual(expect.arrayContaining(["Accurate stock records", "Faster cycle counts", "Reconciliation support"]));
+    expect(needs("logistics_manager")).toEqual(expect.arrayContaining(["Dispatch accuracy", "Shipment visibility", "Process compliance"]));
+  });
+
+  it("gives every persona a different sidebar", () => {
+    const signatures = ROLES.map((role) => navFor(role).map((n) => n.href).join("|"));
+    expect(new Set(signatures).size).toBe(ROLES.length);
+    const labels = (role: Role) => navFor(role).map((n) => n.label);
+    expect(labels("operator")).toEqual(["My shift", "Ask the copilot", "Safety", "Hands-free", "Receive delivery", "Count a shelf", "Check a load"]);
+    expect(labels("supervisor")).toEqual(["Operations overview", "Shift handover", "Exceptions", "Inventory alerts", "Stock approvals", "Ask the copilot"]);
+    expect(labels("inventory_controller")).toEqual(["Accuracy overview", "Stock records", "Count plan", "Cycle count", "Reconciliation", "Ask the copilot"]);
+    expect(labels("logistics_manager")).toEqual(["Logistics overview", "Dispatch accuracy", "Check a load", "Shipments", "Compliance", "Shift handover", "Ask the copilot"]);
+  });
+
+  it("only links to screens the role can open", () => {
+    for (const role of ROLES) {
+      for (const entry of navFor(role)) {
+        expect(can(role, entry.capability), `${role} ${entry.href}`).toBe(true);
+        const needed = capabilityForPath(entry.href);
+        expect(needed && can(role, needed), `${role} ${entry.href}`).toBe(true);
+      }
+    }
   });
 
   it("maps a path to the capability it needs", () => {
     expect(capabilityForPath("/receive")).toBe("receive");
     expect(capabilityForPath("/stock/123")).toBe("stock_records");
+    expect(capabilityForPath("/count-plan")).toBe("count_plan");
+    expect(capabilityForPath("/count")).toBe("count");
     expect(capabilityForPath("/nowhere")).toBeNull();
   });
 });

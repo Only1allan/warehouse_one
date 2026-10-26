@@ -48,10 +48,12 @@ import { getModelManager } from "./model-manager";
 import { MODELS, requiredAssets, src } from "./models";
 
 
-function withTempFile<T>(bytes: Uint8Array, extension: string, use: (file: string) => Promise<T>): Promise<T> {
+export const ROUTER_CACHE_KEY = "copilot-router";
+
+function withTempFile<T>(bytes: Uint8Array, extension: string, run: (file: string) => Promise<T>): Promise<T> {
   const file = path.join(os.tmpdir(), `wh-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}${extension}`);
   fs.writeFileSync(file, bytes);
-  return use(file).finally(() => fs.rmSync(file, { force: true }));
+  return run(file).finally(() => fs.rmSync(file, { force: true }));
 }
 
 export class QvacModelPort implements ModelPort {
@@ -106,6 +108,7 @@ export class QvacModelPort implements ModelPort {
       modelId,
       history: request.messages,
       stream: true,
+      ...(request.cacheKey ? { kvCache: request.cacheKey } : {}),
       ...(request.tools?.length
         ? {
             tools: request.tools.map((tool) => ({
@@ -291,6 +294,7 @@ export class QvacModelPort implements ModelPort {
         return;
       }
       await Promise.all([this.models.get("llm"), this.models.get("embeddings")]);
+      await this.primeRouter();
       this.warmFailure = null;
     })()
       .catch((error: unknown) => {
@@ -299,6 +303,25 @@ export class QvacModelPort implements ModelPort {
       .finally(() => {
         this.warming = null;
       });
+  }
+
+  /** Runs one routing request so the shared prompt is cached and the first real question is fast. */
+  private async primeRouter(): Promise<void> {
+    const { routingSystemPrompt } = await import("../../copilot/prompt");
+    const { COPILOT_TOOLS } = await import("../../copilot/tools");
+    for await (const event of this.ask({
+      messages: [
+        { role: "system", content: routingSystemPrompt(new Date()) },
+        { role: "user", content: "How many generators do we have?" },
+      ],
+      tools: COPILOT_TOOLS,
+      toolChoice: "required",
+      maxTokens: 60,
+      cacheKey: ROUTER_CACHE_KEY,
+    })) {
+      void event;
+    }
+    await this.ensureSopIndex().catch(() => undefined);
   }
 
   warmState(): { llm: boolean; embeddings: boolean; busy: boolean; problem: string | null } {

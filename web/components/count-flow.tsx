@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { computeVariance } from "@/lib/domain/variance";
 import type { CountRecord, CountTarget } from "@/lib/services/counting";
@@ -43,7 +44,8 @@ function VarianceBanner({ expected, counted }: { expected: number; counted: numb
 
 export function CountFlow() {
   const { can } = useAuth();
-  const [query, setQuery] = useState("");
+  const initialQuery = useSearchParams().get("q") ?? "";
+  const [query, setQuery] = useState(initialQuery);
   const [targets, setTargets] = useState<CountTarget[] | null>(null);
   const [target, setTarget] = useState<CountTarget | null>(null);
   const [counted, setCounted] = useState("");

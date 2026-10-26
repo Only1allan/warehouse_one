@@ -17,10 +17,10 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `npx next dev -p ${port}`,
+    command: `npx next build && npx next start -p ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: true,
-    env: { WAREHOUSE_DB_PATH: path.join(__dirname, "data", "e2e.db") },
-    timeout: 120_000,
+    env: { WAREHOUSE_DB_PATH: path.join(__dirname, "data", "e2e.db"), NEXT_DIST_DIR: ".next-e2e", NEXT_TELEMETRY_DISABLED: "1" },
+    timeout: 600_000,
   },
 });

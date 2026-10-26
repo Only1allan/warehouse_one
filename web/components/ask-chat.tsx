@@ -25,7 +25,17 @@ const EXAMPLES = [
   "What should I do with damaged inventory?",
 ];
 
-export function AskChat() {
+export function AskChat({
+  examples = EXAMPLES,
+  introTitle = "Try asking",
+  introText = "Stock and location answers use the inventory records. Procedure answers cite their source.",
+  voiceFirst = false,
+}: {
+  examples?: string[];
+  introTitle?: string;
+  introText?: string;
+  voiceFirst?: boolean;
+} = {}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [context, setContext] = useState<ConversationContext>({});
@@ -92,12 +102,10 @@ export function AskChat() {
       <div aria-live="polite" className="space-y-5" data-testid="conversation">
         {messages.length === 0 ? (
           <Panel>
-            <h2 className="text-lg font-semibold">Try asking</h2>
-            <p className="mt-1 text-sm text-soft">
-              Stock and location answers use the inventory records. Procedure answers cite their source.
-            </p>
+            <h2 className="text-lg font-semibold">{introTitle}</h2>
+            <p className="mt-1 text-sm text-soft">{introText}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {EXAMPLES.map((example) => (
+              {examples.map((example) => (
                 <button
                   key={example}
                   type="button"
@@ -150,8 +158,13 @@ export function AskChat() {
         <div ref={endRef} />
       </div>
 
+      {voiceFirst ? (
+        <div className="order-first" data-testid="hands-free">
+          <VoiceButton large onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />
+        </div>
+      ) : null}
       <div className="sticky bottom-24 z-[5] space-y-2 rounded-panel border border-line bg-surface p-2 shadow-panel md:bottom-4">
-      <VoiceButton onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />
+      {voiceFirst ? null : <VoiceButton onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />}
       <form
         className="flex gap-2"
         onSubmit={(e) => {

@@ -102,7 +102,9 @@ describe("ask: inventory lookup", () => {
     });
     expect(result.text).toContain("Portable Generator 5kW");
     expect(result.context).toMatchObject({ context: { lastSku: "001254" } });
-    expect(model.askRequests[0].messages[0].content).toContain("SKU 001254");
+    expect(model.askRequests[0].messages.at(-1)?.content).toContain("SKU 001254");
+    expect(model.askRequests[0].messages[0].content).not.toContain("001254");
+    expect(model.askRequests[0].cacheKey).toBe("copilot-router");
   });
 
   it("sends only the last four messages of history to the model", async () => {
@@ -114,6 +116,7 @@ describe("ask: inventory lookup", () => {
     await run(model, { message: "low stock?", history });
     const sent = model.askRequests[0].messages;
     expect(sent.map((m) => m.content)).toEqual([sent[0].content, "m4", "m5", "m6", "m7", "low stock?"]);
+    expect(sent[0].content).toBe(model.askRequests[0].messages[0].content);
   });
 });
 

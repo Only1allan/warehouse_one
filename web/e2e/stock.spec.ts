@@ -28,8 +28,7 @@ test.describe("stock records and reconciliation", () => {
   });
 
   test("approving a variance adjusts stock and resolves the count", async ({ page }) => {
-    await page.goto("/stock");
-    await page.getByRole("tab", { name: "Reconciliation" }).click();
+    await page.goto("/reconciliation");
     const pending = page.getByTestId("pending-list");
     await expect(pending).toContainText("Bearing 6205 at A-3-1");
     await expect(pending).toContainText("Variance −4");
@@ -37,19 +36,18 @@ test.describe("stock records and reconciliation", () => {
     await expect(pending).toContainText("Every count with a variance has been reconciled");
     await expect(page.getByText("Stock adjusted")).toBeVisible();
 
-    await page.getByRole("tab", { name: "Stock records" }).click();
+    await page.goto("/stock");
     await page.getByRole("searchbox").fill("bearing");
     await expect(page.getByTestId("stock-list").locator("li").first()).toContainText("176");
   });
 
   test("declining keeps stock and records the reason", async ({ page }) => {
-    await page.goto("/stock");
-    await page.getByRole("tab", { name: "Reconciliation" }).click();
+    await page.goto("/reconciliation");
     await page.getByLabel("Reason for declining").fill("Recount tomorrow");
     await page.getByRole("button", { name: "Decline" }).click();
     await expect(page.getByTestId("pending-list")).toContainText("Every count with a variance has been reconciled");
     await expect(page.getByText("Recount tomorrow")).toBeVisible();
-    await page.getByRole("tab", { name: "Stock records" }).click();
+    await page.goto("/stock");
     await page.getByRole("searchbox").fill("bearing");
     await expect(page.getByTestId("stock-list").locator("li").first()).toContainText("180");
   });

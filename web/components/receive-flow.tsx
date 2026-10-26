@@ -44,7 +44,7 @@ export function ReceiveFlow() {
   const [orders, setOrders] = useState<PurchaseOrderSummary[] | null>(null);
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [received, setReceived] = useState<Record<string, string>>({});
-  const [report, setReport] = useState<ReceiptReport | null>(null);
+  const [storedReport, setReport] = useState<ReceiptReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<{ receiptId: number; report: ReceiptReport } | null>(null);
@@ -60,8 +60,14 @@ export function ReceiveFlow() {
   }, []);
 
   useEffect(() => {
-    void loadOrders();
-  }, [loadOrders]);
+    let alive = true;
+    fetch("/api/receiving/pos")
+      .then((r) => r.json())
+      .then((data) => alive && setOrders(data), (e: Error) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function choose(poNumber: string) {
     setError(null);
@@ -95,12 +101,10 @@ export function ReceiveFlow() {
   }
 
   const allEntered = po ? po.lines.every((l) => received[l.sku] !== undefined && received[l.sku] !== "") : false;
+  const report = po && allEntered ? storedReport : null;
 
   useEffect(() => {
-    if (!po || !allEntered) {
-      setReport(null);
-      return;
-    }
+    if (!po || !allEntered) return;
     const handle = setTimeout(async () => {
       try {
         setReport(

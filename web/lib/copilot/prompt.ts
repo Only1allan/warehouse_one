@@ -1,11 +1,10 @@
 import type { SopPassage } from "../ai/model-port";
 import { dayKey } from "../time";
 
-export function routingSystemPrompt(now: Date, contextHint?: string): string {
+export function routingSystemPrompt(now: Date): string {
   return [
     "You are the Warehouse Operations Copilot, an assistant for warehouse operators.",
     `Today is ${dayKey(now)}.`,
-    ...(contextHint ? [contextHint] : []),
     "You never know stock levels, locations, purchase orders or procedures from memory.",
     "For every question, call exactly one of the available tools with the user's own words as arguments.",
     "If the question is not about warehouse operations, answer briefly that you can only help with warehouse work.",

@@ -1,14 +1,17 @@
+import { Suspense } from "react";
 import { CountFlow } from "@/components/count-flow";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, Skeleton } from "@/components/ui";
 
 export default function CountPage() {
   return (
     <>
       <PageHeader
         title="Count"
-        description="Count a shelf and see the variance against what the records expect."
+        description="Count a shelf, by hand or from a photo, and see the variance against what the records expect."
       />
-      <CountFlow />
+      <Suspense fallback={<Skeleton className="h-40" />}>
+        <CountFlow />
+      </Suspense>
     </>
   );
 }

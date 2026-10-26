@@ -1,6 +1,8 @@
 import type { Db } from "../db";
 import type { Role } from "../auth/capabilities";
+import { listEvents } from "../events";
 import { dayKey } from "../time";
+import { buildCountPlan } from "./count-plan";
 import { getHealthReport } from "./health";
 import { dispatchAccuracy, processCompliance } from "./logistics";
 import { listReconciliations } from "./stock";
@@ -9,6 +11,7 @@ export interface RecentActivity {
   type: string;
   at: string;
   summary: string;
+  who?: string;
 }
 
 export type Home =
@@ -20,6 +23,8 @@ export type Home =
     }
   | {
       kind: "supervisor";
+      today: { receipts: number; dispatches: number; counts: number; issues: number };
+      feed: RecentActivity[];
       openExceptions: number;
       exceptionsByKind: Record<string, number>;
       belowMinimum: number;
@@ -28,6 +33,7 @@ export type Home =
     }
   | {
       kind: "inventory_controller";
+      nextToCount: Array<{ sku: string; name: string; locationId: string; reasons: string[] }>;
       pendingReconciliations: number;
       countsDone: number;
       countAccuracyPct: number | null;
@@ -77,19 +83,38 @@ export function getHome(db: Db, user: { id: string; role: Role }, now: Date): Ho
             .all(user.id) as Array<{ type: string; at: string }>
         ).map((r) => ({ type: r.type, at: r.at, summary: eventSummary[r.type] ?? r.type })),
       };
-    case "supervisor":
+    case "supervisor": {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      const events = listEvents(db, { from: start, to: new Date(start.getTime() + 86_400_000) });
+      const names = new Map(
+        (db.prepare("SELECT id, name FROM operators").all() as Array<{ id: string; name: string }>).map((o) => [o.id, o.name]),
+      );
+      const of = (t: string) => events.filter((e) => e.type === t).length;
       return {
         kind: "supervisor",
+        today: {
+          receipts: of("receipt_confirmed"),
+          dispatches: of("dispatch_confirmed"),
+          counts: of("count_confirmed"),
+          issues: of("equipment_issue_reported"),
+        },
+        feed: [...events]
+          .reverse()
+          .slice(0, 8)
+          .map((e) => ({ type: e.type, at: e.at, summary: eventSummary[e.type] ?? e.type, who: names.get(e.operatorId) })),
         openExceptions,
         exceptionsByKind: exceptions,
         belowMinimum: health.stockout,
         health,
         pendingReconciliations: listReconciliations(db).pending.length,
       };
+    }
     case "inventory_controller": {
       const c = processCompliance(db).counts;
       return {
         kind: "inventory_controller",
+        nextToCount: buildCountPlan(db, now, 3).map((p) => ({ sku: p.sku, name: p.name, locationId: p.locationId, reasons: p.reasons })),
         pendingReconciliations: listReconciliations(db).pending.length,
         countsDone: c.total,
         countAccuracyPct: c.ratePct,

@@ -1,4 +1,4 @@
-import { StockWorkspace } from "@/components/stock-workspace";
+import { StockRecords } from "@/components/stock-workspace";
 import { PageHeader } from "@/components/ui";
 
 export default function StockPage() {
@@ -6,9 +6,9 @@ export default function StockPage() {
     <>
       <PageHeader
         title="Stock records"
-        description="Search every product, see where it is and how it has moved, and reconcile counts that show a variance."
+        description="Search every product. Open one to see where it is, how it has moved, what is on the way and what is promised."
       />
-      <StockWorkspace />
+      <StockRecords />
     </>
   );
 }

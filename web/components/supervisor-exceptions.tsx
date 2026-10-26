@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { ExceptionDetail, ExceptionKind, ExceptionRow } from "@/lib/services/exceptions";
 import { Icon, type IconName } from "./icons";
 import { useAuth } from "./auth-context";
-import { Button, Panel, Skeleton } from "./ui";
+import { ReportIssue } from "./report-issue";
+import { Panel, Skeleton } from "./ui";
 
 const kinds: Array<{ value: ExceptionKind | ""; label: string }> = [
   { value: "", label: "All" },
@@ -91,9 +92,6 @@ export function SupervisorExceptions() {
   const [shift, setShift] = useState("");
   const [rows, setRows] = useState<ExceptionRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [equipment, setEquipment] = useState("");
-  const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -107,25 +105,19 @@ export function SupervisorExceptions() {
   }, [kind, shift]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let alive = true;
+    const params = new URLSearchParams();
+    if (kind) params.set("kind", kind);
+    if (shift) params.set("shift", shift);
+    getJson<ExceptionRow[]>(`/api/supervisor/exceptions?${params}`).then(
+      (r) => alive && setRows(r),
+      (e: Error) => alive && setError(e.message),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [kind, shift]);
 
-  async function report() {
-    setSaving(true);
-    setError(null);
-    try {
-      await getJson("/api/supervisor/equipment-issues", { equipment, description });
-      setEquipment("");
-      setDescription("");
-      await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const field = "h-14 w-full rounded-control border border-line-strong bg-surface px-4";
 
   return (
     <div className="space-y-6">
@@ -155,7 +147,7 @@ export function SupervisorExceptions() {
             ))}
           </div>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-soft">Shift</span>
+            <span className="mb-1 block text-sm font-medium text-soft">Filter by shift</span>
             <select value={shift} onChange={(e) => setShift(e.target.value)} className="h-12 rounded-control border border-line-strong bg-surface px-3 font-medium">
               <option value="">All shifts</option>
               {shifts.map((s) => (
@@ -202,21 +194,8 @@ export function SupervisorExceptions() {
 
       <Panel>
         <h2 className="text-lg font-semibold">Report an equipment issue</h2>
-        <p className="mt-1 text-sm text-soft">Tag the equipment out of service first, then report it here.</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-[14rem_1fr]">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-soft">Equipment</span>
-            <input value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="Forklift F01" className={field} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-soft">What is wrong</span>
-            <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brakes feel soft" className={field} />
-          </label>
-        </div>
-        <div className="mt-4">
-          <Button variant="primary" icon="check" onClick={report} disabled={saving || !equipment.trim() || !description.trim()}>
-            Report issue
-          </Button>
+        <div className="mt-2">
+          <ReportIssue onReported={() => void load()} />
         </div>
       </Panel>
     </div>

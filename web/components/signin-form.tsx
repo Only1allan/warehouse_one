@@ -45,22 +45,18 @@ export function SignInForm() {
       }, () => setLogins([]));
   }, [as]);
 
-  useEffect(() => {
-    if (!shift && shifts.length > 0) {
-      const hour = new Date().getHours();
-      const current = shifts.find((s) =>
-        s.startHour < s.endHour ? hour >= s.startHour && hour < s.endHour : hour >= s.startHour || hour < s.endHour,
-      );
-      setShift(current?.id ?? shifts[0].id);
-    }
-  }, [shifts, shift]);
+  const hour = new Date().getHours();
+  const currentShift = shifts.find((s) =>
+    s.startHour < s.endHour ? hour >= s.startHour && hour < s.endHour : hour >= s.startHour || hour < s.endHour,
+  );
+  const chosenShift = shift || shiftId || currentShift?.id || shifts[0]?.id || "";
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await signIn(username, password, shift || undefined);
+      await signIn(username, password, chosenShift || undefined);
       router.replace(next);
     } catch (e) {
       setError((e as Error).message);
@@ -135,7 +131,7 @@ export function SignInForm() {
           </label>
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Shift</span>
-            <select value={shift || shiftId || ""} onChange={(e) => setShift(e.target.value)} className={field}>
+            <select value={chosenShift} onChange={(e) => setShift(e.target.value)} className={field}>
               {shifts.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} · {String(s.startHour).padStart(2, "0")}:00 to {String(s.endHour).padStart(2, "0")}:00

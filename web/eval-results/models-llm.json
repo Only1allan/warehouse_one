@@ -1,0 +1,19 @@
+[
+  {
+    "role": "llm",
+    "candidate": "LLAMA_3_2_1B_INST_Q4_0",
+    "ok": true,
+    "baselineMB": 178,
+    "loadSeconds": 7.5,
+    "loadedMB": 1951,
+    "deltaMB": 1773,
+    "metrics": {
+      "toolAccuracyPct": 87.5,
+      "argAccuracyPct": 100,
+      "meanSecondsPerQuery": 12.16,
+      "meanFirstTokenMs": 10489,
+      "tokensPerSecond": 12.8,
+      "misses": "Do we have any pressure washers? -> search_sops | How do I process returns? -> get_stock_level | What is the receiving process? -> get_receiving_schedule"
+    }
+  }
+]

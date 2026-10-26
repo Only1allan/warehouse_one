@@ -75,10 +75,11 @@ export async function* askCopilot(
   const now = deps.now();
   const context = input.context ?? {};
   const recent = (input.history ?? []).slice(-4);
+  const hint = contextHint(deps.db, context);
   const messages: ChatMessage[] = [
-    { role: "system", content: routingSystemPrompt(now, contextHint(deps.db, context)) },
+    { role: "system", content: routingSystemPrompt(now) },
     ...recent,
-    { role: "user", content: input.message },
+    { role: "user", content: hint ? `${input.message}\n\n(${hint})` : input.message },
   ];
 
   let call: { name: string; arguments: Record<string, unknown> } | null = null;
@@ -89,6 +90,7 @@ export async function* askCopilot(
     toolChoice: "required",
     maxTokens: 120,
     signal,
+    cacheKey: "copilot-router",
   })) {
     if (event.type === "toolCall" && !call) {
       call = { name: event.name, arguments: event.arguments };

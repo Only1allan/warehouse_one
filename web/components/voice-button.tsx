@@ -12,10 +12,12 @@ export function VoiceButton({
   onSend,
   onEdit,
   disabled,
+  large,
 }: {
   onSend: (text: string) => void;
   onEdit: (text: string) => void;
   disabled?: boolean;
+  large?: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [heard, setHeard] = useState("");
@@ -94,8 +96,9 @@ export function VoiceButton({
     setPhase("idle");
   }
 
-  const base =
-    "inline-flex min-h-14 shrink-0 items-center justify-center gap-2 rounded-control border px-4 font-semibold";
+  const base = large
+    ? "inline-flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-panel border-2 px-6 text-2xl font-bold"
+    : "inline-flex min-h-14 shrink-0 items-center justify-center gap-2 rounded-control border px-4 font-semibold";
 
   return (
     <div className="flex flex-col gap-2">
@@ -123,8 +126,8 @@ export function VoiceButton({
             phase === "recording" ? "border-bad bg-bad text-white" : "border-line-strong bg-surface hover:bg-sunk"
           } disabled:opacity-45`}
         >
-          <Icon name="mic" size={22} />
-          {phase === "recording" ? `Listening… ${seconds}s` : "Hold to talk"}
+          <Icon name="mic" size={large ? 56 : 22} />
+          {phase === "recording" ? `Listening… ${seconds}s` : large ? "Hold to talk, release to ask" : "Hold to talk"}
         </button>
         <label className="inline-flex min-h-14 cursor-pointer items-center rounded-control px-3 text-sm font-semibold underline underline-offset-4 hover:bg-sunk">
           Upload audio

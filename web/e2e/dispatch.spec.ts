@@ -36,7 +36,7 @@ test.describe("dispatch verification", () => {
     await page.getByRole("radio", { name: /Order 5521/ }).click();
     await load(page, "Roofing Sheets (pallet of 100)", "500");
     await page.getByRole("button", { name: "Confirm dispatch" }).click();
-    await expect(page.getByRole("alert")).toContainText("Not enough stock");
+    await expect(page.locator("main [role=alert]")).toContainText("Not enough stock");
   });
 
   test("the logistics manager sees the shortfall in dispatch accuracy", async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe("dispatch verification", () => {
     await expect(page.getByTestId("dispatch-saved")).toBeVisible();
 
     await signInAs(page, "kevin");
-    await page.goto("/shipments");
+    await page.goto("/accuracy");
     await expect(page.getByTestId("shortfalls")).toContainText("Order 5521");
     await expect(page.getByTestId("meter-Dispatches loaded in full")).toContainText("33.3%");
   });

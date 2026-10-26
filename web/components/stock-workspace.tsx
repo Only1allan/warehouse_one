@@ -96,7 +96,7 @@ function Detail({ sku }: { sku: string }) {
   );
 }
 
-function Records() {
+export function StockRecords() {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [rows, setRows] = useState<StockRow[] | null>(null);
@@ -183,7 +183,7 @@ function Records() {
   );
 }
 
-function Reconcile() {
+export function Reconcile() {
   const { can } = useAuth();
   const [data, setData] = useState<{ pending: Reconciliation[]; resolved: Reconciliation[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -198,8 +198,15 @@ function Reconcile() {
     }
   }, []);
   useEffect(() => {
-    void load();
-  }, [load]);
+    let alive = true;
+    api<{ pending: Reconciliation[]; resolved: Reconciliation[] }>("/api/stock/reconciliations").then(
+      (d) => alive && setData(d),
+      (e: Error) => alive && setError(e.message),
+    );
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function act(countId: number, kind: "approve" | "decline") {
     setBusy(countId);
@@ -286,34 +293,6 @@ function Reconcile() {
           </ul>
         </Panel>
       ) : null}
-    </div>
-  );
-}
-
-export function StockWorkspace() {
-  const [tab, setTab] = useState<"records" | "reconcile">("records");
-  const tabs = [
-    { id: "records" as const, label: "Stock records" },
-    { id: "reconcile" as const, label: "Reconciliation" },
-  ];
-  return (
-    <div className="space-y-6">
-      <div role="tablist" aria-label="Stock views" className="flex gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`min-h-12 rounded-full border px-5 font-semibold ${
-              tab === t.id ? "border-ink bg-signal" : "border-line-strong bg-surface hover:bg-sunk"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      {tab === "records" ? <Records /> : <Reconcile />}
     </div>
   );
 }

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# separate builds for tests and the offline check
+/.next-e2e/
+/.next-offline/

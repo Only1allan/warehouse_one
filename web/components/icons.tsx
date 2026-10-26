@@ -89,6 +89,7 @@ const paths = {
     </>
   ),
   chevron: <path d="M9 6l6 6-6 6" />,
+  arrowUpRight: <path d="M7 17L17 7M8.5 7H17v8.5" />,
   info: (
     <>
       <circle cx="12" cy="12" r="9" />

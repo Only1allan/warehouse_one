@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-context";
+import { MotionProvider } from "@/components/motion";
 
 const poppins = localFont({
   src: [
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={poppins.variable}>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <MotionProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </MotionProvider>
       </body>
     </html>
   );

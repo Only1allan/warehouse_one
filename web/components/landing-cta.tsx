@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "./auth-context";
 
 const primary =
-  "inline-flex min-h-14 items-center justify-center gap-2 rounded-control border border-ink/15 bg-signal px-6 text-base font-semibold text-ink shadow-[0_1px_0_rgb(27_26_23/0.2)] hover:bg-signal-press";
+  "inline-flex min-h-14 items-center justify-center gap-2 rounded-control border border-ink/15 bg-signal px-6 text-base font-semibold text-ink shadow-[0_1px_0_rgb(27_26_23/0.2)] hover:bg-signal-press hover:shadow-lift";
 const secondary =
   "inline-flex min-h-14 items-center justify-center gap-2 rounded-control border border-line-strong bg-surface px-6 text-base font-semibold text-ink hover:bg-sunk";
 
@@ -21,6 +21,30 @@ export function HeaderCta() {
     <Link href="/signin" className={primary} data-testid="header-signin">
       Sign in
     </Link>
+  );
+}
+
+export function ClosingCta() {
+  const { status, user } = useAuth();
+  const dark =
+    "inline-flex min-h-14 items-center justify-center gap-2 rounded-control bg-ink px-6 text-base font-semibold text-canvas hover:bg-ink/85";
+  const light =
+    "inline-flex min-h-14 items-center justify-center gap-2 rounded-control border border-ink/25 bg-surface/70 px-6 text-base font-semibold text-ink hover:bg-surface";
+  return (
+    <div className="flex flex-wrap gap-3">
+      {status === "ready" && user ? (
+        <Link href="/home" className={dark}>
+          Open the app
+        </Link>
+      ) : (
+        <Link href="/signin" className={dark}>
+          Sign in
+        </Link>
+      )}
+      <Link href="/signin#demo-heading" className={light}>
+        Pick a demo login
+      </Link>
+    </div>
   );
 }
 

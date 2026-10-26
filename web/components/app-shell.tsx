@@ -1,12 +1,43 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { capabilityForPath, navFor, ROLE_NAV } from "@/lib/auth/capabilities";
+import { avatarFor } from "@/lib/photos";
 import { useAuth } from "./auth-context";
 import { Icon, type IconName } from "./icons";
+import { springSoft } from "./motion";
 import { Skeleton } from "./ui";
+
+export function Avatar({
+  username,
+  name,
+  size = 44,
+  ring = "ring-surface",
+}: {
+  username?: string;
+  name: string;
+  size?: number;
+  ring?: string;
+}) {
+  const photo = avatarFor(username);
+  return (
+    <span
+      aria-hidden="true"
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-ink font-bold text-signal ring-2 ${ring}`}
+      style={{ width: size, height: size }}
+    >
+      {photo ? (
+        <Image src={photo} alt="" fill sizes={`${size * 2}px`} placeholder="blur" className="object-cover" />
+      ) : (
+        name.slice(0, 1)
+      )}
+    </span>
+  );
+}
 
 export function LocalBadge() {
   return (
@@ -63,7 +94,14 @@ export function AiStatus() {
       title={warm?.problem ?? "Models on this device"}
       className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold ${tone}`}
     >
-      <Icon name={ready ? "cpu" : warm?.problem ? "alert" : "info"} size={20} />
+      {ready || warm?.problem ? (
+        <Icon name={ready ? "cpu" : "alert"} size={20} />
+      ) : (
+        <span aria-hidden="true" className="relative grid size-5 place-items-center">
+          <span className="ping-soft absolute size-2.5 rounded-full bg-ink" />
+          <span className="relative size-2.5 rounded-full bg-ink" />
+        </span>
+      )}
       {text}
     </Link>
   );
@@ -80,11 +118,9 @@ function UserPanel() {
   return (
     <div className="space-y-3" data-testid="user-panel">
       <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-base font-bold text-signal"
-        >
-          {user.name.slice(0, 1)}
+        <span className="relative">
+          <Avatar username={user.username} name={user.name} size={46} />
+          <span aria-hidden="true" className="absolute bottom-0 right-0 size-3 rounded-full bg-ok ring-2 ring-surface" />
         </span>
         <div className="min-w-0 leading-tight">
           <div className="truncate font-semibold" data-testid="user-name">
@@ -134,12 +170,13 @@ function NavLinks({ orientation }: { orientation: "rail" | "bar" }) {
             key={d.href}
             href={d.href}
             aria-current={isActive(d.href) ? "page" : undefined}
-            className={`flex min-h-16 min-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-control px-2 text-center text-xs font-semibold ${
-              isActive(d.href) ? "bg-signal text-ink" : "text-ink hover:bg-sunk"
-            }`}
+            className="relative flex min-h-16 min-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-control px-2 text-center text-xs font-semibold text-ink hover:bg-sunk"
           >
-            <Icon name={d.icon as IconName} size={22} />
-            {d.label}
+            {isActive(d.href) ? (
+              <motion.span layoutId="nav-pill-bar" transition={springSoft} className="absolute inset-0 rounded-control bg-signal" />
+            ) : null}
+            <Icon name={d.icon as IconName} size={22} className="relative" />
+            <span className="relative">{d.label}</span>
           </Link>
         ))}
       </nav>
@@ -161,12 +198,21 @@ function NavLinks({ orientation }: { orientation: "rail" | "bar" }) {
                 <Link
                   href={d.href}
                   aria-current={isActive(d.href) ? "page" : undefined}
-                  className={`flex min-h-14 items-center gap-3.5 rounded-control px-4 text-base font-semibold ${
-                    isActive(d.href) ? "bg-signal text-ink shadow-[0_1px_0_rgb(27_26_23/0.2)]" : "text-ink hover:bg-sunk"
-                  }`}
+                  className="group relative flex min-h-14 items-center gap-3.5 rounded-control px-4 text-base font-semibold text-ink hover:bg-sunk"
                 >
-                  <Icon name={d.icon as IconName} size={24} />
-                  {d.label}
+                  {isActive(d.href) ? (
+                    <motion.span
+                      layoutId="nav-pill-rail"
+                      transition={springSoft}
+                      className="absolute inset-0 rounded-control bg-signal shadow-[0_1px_0_rgb(27_26_23/0.2)]"
+                    />
+                  ) : null}
+                  <Icon
+                    name={d.icon as IconName}
+                    size={24}
+                    className="relative transition-transform duration-300 ease-[var(--ease-out)] group-hover:scale-110"
+                  />
+                  <span className="relative">{d.label}</span>
                 </Link>
               </li>
             ))}
@@ -243,7 +289,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-dvh min-w-0 flex-col pb-28 md:pb-0">
-        <header className="flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 md:px-8">
+        <header className="glass sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-8">
           <div className="flex items-center gap-2.5 md:hidden">
             <span aria-hidden="true" className="grid size-9 place-items-center rounded-control bg-signal text-ink">
               <Icon name="shelf" size={20} />
@@ -263,7 +309,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface md:hidden">
         <details className="border-b border-line px-4 py-2 text-sm">
           <summary className="flex min-h-12 cursor-pointer items-center gap-2 font-semibold">
-            <Icon name="person" size={18} /> {user.name} · {user.title}
+            <Avatar username={user.username} name={user.name} size={30} /> {user.name} · {user.title}
           </summary>
           <div className="pb-3 pt-2">
             <UserPanel />

@@ -1,5 +1,7 @@
+import * as motion from "motion/react-client";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
+import { ScreenHeader } from "./page-header";
 
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
 
@@ -56,24 +58,8 @@ export function StatusPill({ status, label }: { status: Status; label?: string }
   );
 }
 
-export function PageHeader({
-  title,
-  description,
-  actions,
-}: {
-  title: string;
-  description?: string;
-  actions?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-      <div className="max-w-2xl">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        {description ? <p className="mt-1.5 text-soft">{description}</p> : null}
-      </div>
-      {actions}
-    </div>
-  );
+export function PageHeader(props: { title: string; description?: string; actions?: ReactNode }) {
+  return <ScreenHeader {...props} />;
 }
 
 export function Panel({
@@ -84,11 +70,15 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -6% 0px" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={`rounded-panel border border-line bg-surface p-5 shadow-panel ${className}`}
     >
       {children}
-    </section>
+    </motion.section>
   );
 }
 

@@ -29,9 +29,8 @@ export const MODELS = {
     },
   },
   vision: {
-    constant: "VISIONPSY_NANO_460M_MULTIMODAL_Q8_0",
-    projection: "MMPROJ_VISIONPSY_NANO_460M_MULTIMODAL_Q8_0",
-    maxEdgePixels: 512,
+    constant: "SMOLVLM2_500M_MULTIMODAL_Q8_0",
+    projection: "MMPROJ_SMOLVLM2_500M_MULTIMODAL_Q8_0",
   },
 } as const;
 

@@ -16,9 +16,11 @@ export function POST(request: Request) {
     if (file.size > MAX_BYTES) throw new AppError("invalid_request", "That photo is too large. Try a smaller one.");
     const target = getCountTarget(ctx.db, sku, locationId);
     const bytes = new Uint8Array(await file.arrayBuffer());
+    const small = form.get("visionImage");
+    const visionBytes = small instanceof File && small.size > 0 ? new Uint8Array(await small.arrayBuffer()) : bytes;
     const photoPath = saveCountPhoto(bytes);
     try {
-      const proposal = await getModelPort().proposeCount(bytes, { sku, productName: target.name });
+      const proposal = await getModelPort().proposeCount(visionBytes, { sku, productName: target.name });
       return Response.json({ photoPath, proposedQty: proposal.count, note: proposal.note ?? null });
     } catch {
       return Response.json({

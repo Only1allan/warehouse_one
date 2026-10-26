@@ -68,14 +68,14 @@ export class QvacModelPort implements ModelPort {
       () =>
         loadModel({
           modelSrc: src(MODELS.llm.constant),
-          modelType: "llm",
+          modelType: "llamacpp-completion",
           modelConfig: { ctx_size: MODELS.llm.contextSize, tools: true },
         } as never) as Promise<string>,
       true,
     );
     this.models.register(
       "embeddings",
-      () => loadModel({ modelSrc: src(MODELS.embeddings.constant), modelType: "embeddings" }) as Promise<string>,
+      () => loadModel({ modelSrc: src(MODELS.embeddings.constant), modelType: "llamacpp-embedding" }) as Promise<string>,
       true,
     );
     this.models.register(
@@ -87,7 +87,7 @@ export class QvacModelPort implements ModelPort {
     this.models.register(
       "ocr",
       () =>
-        loadModel({ modelSrc: src(MODELS.ocr.constant), modelConfig: { ...MODELS.ocr.config } } as never) as Promise<string>,
+        loadModel({ modelSrc: src(MODELS.ocr.constant), modelType: "ggml-ocr", modelConfig: { ...MODELS.ocr.config } } as never) as Promise<string>,
       false,
     );
     this.models.register(
@@ -95,7 +95,7 @@ export class QvacModelPort implements ModelPort {
       () =>
         loadModel({
           modelSrc: src(MODELS.vision.constant),
-          modelType: "llm",
+          modelType: "llamacpp-completion",
           modelConfig: { ctx_size: 2048, projectionModelSrc: src(MODELS.vision.projection) },
         } as never) as Promise<string>,
       false,

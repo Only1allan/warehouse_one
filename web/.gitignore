@@ -43,3 +43,6 @@ next-env.d.ts
 # separate builds for tests and the offline check
 /.next-e2e/
 /.next-offline/
+
+# local HTTPS certificate for phone testing
+/data/certs/

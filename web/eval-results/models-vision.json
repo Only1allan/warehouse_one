@@ -66,5 +66,56 @@
       "meanSecondsPerImage": 64.42,
       "trueVsAnswer": "6:1 12:1 18:1 24:1 31:1 35:1"
     }
+  },
+  {
+    "role": "vision",
+    "candidate": "SMOLVLM2_500M_MULTIMODAL_Q8_0 (512px)",
+    "ok": true,
+    "baselineMB": 177,
+    "loadSeconds": 5.5,
+    "loadedMB": 1209,
+    "deltaMB": 1032,
+    "metrics": {
+      "exactPct": 16.7,
+      "within1Pct": 33.3,
+      "meanAbsError": 3.8,
+      "unparsed": 0,
+      "meanSecondsPerImage": 6.57,
+      "trueVsAnswer": "6:5 12:12 18:14 24:20 31:21 35:31"
+    }
+  },
+  {
+    "role": "vision",
+    "candidate": "SMOLVLM2_500M_MULTIMODAL_Q8_0 (512px)",
+    "ok": true,
+    "baselineMB": 177,
+    "loadSeconds": 5.5,
+    "loadedMB": 1209,
+    "deltaMB": 1032,
+    "metrics": {
+      "exactPct": 16.7,
+      "within1Pct": 33.3,
+      "meanAbsError": 3.8,
+      "unparsed": 0,
+      "meanSecondsPerImage": 6.57,
+      "trueVsAnswer": "6:5 12:12 18:14 24:20 31:21 35:31"
+    }
+  },
+  {
+    "role": "vision",
+    "candidate": "VISIONPSY_NANO_460M_MULTIMODAL_Q8_0 (512px)",
+    "ok": true,
+    "baselineMB": 178,
+    "loadSeconds": 5.5,
+    "loadedMB": 1150,
+    "deltaMB": 972,
+    "metrics": {
+      "exactPct": 33.3,
+      "within1Pct": 33.3,
+      "meanAbsError": 9.3,
+      "unparsed": 0,
+      "meanSecondsPerImage": 41.92,
+      "trueVsAnswer": "6:6 12:12 18:16 24:12 31:12 35:12"
+    }
   }
 ]

@@ -3,17 +3,44 @@
     "role": "llm",
     "candidate": "LLAMA_3_2_1B_INST_Q4_0",
     "ok": true,
-    "baselineMB": 178,
-    "loadSeconds": 7.5,
-    "loadedMB": 1951,
-    "deltaMB": 1773,
+    "baselineMB": 176,
+    "loadSeconds": 12.2,
+    "loadedMB": 2131,
+    "deltaMB": 1955,
     "metrics": {
       "toolAccuracyPct": 87.5,
       "argAccuracyPct": 100,
-      "meanSecondsPerQuery": 12.16,
-      "meanFirstTokenMs": 10489,
-      "tokensPerSecond": 12.8,
+      "meanSecondsPerQuery": 2.23,
+      "meanFirstTokenMs": 679,
+      "tokensPerSecond": 13.3,
       "misses": "Do we have any pressure washers? -> search_sops | How do I process returns? -> get_stock_level | What is the receiving process? -> get_receiving_schedule"
     }
+  },
+  {
+    "role": "llm",
+    "candidate": "QWEN3_1_7B_INST_Q4",
+    "ok": true,
+    "baselineMB": 181,
+    "loadSeconds": 14.8,
+    "loadedMB": 2824,
+    "deltaMB": 2643,
+    "metrics": {
+      "toolAccuracyPct": 87.5,
+      "argAccuracyPct": 100,
+      "meanSecondsPerQuery": 6.08,
+      "meanFirstTokenMs": 1132,
+      "tokensPerSecond": 8.2,
+      "misses": "How many safety helmets are in stock? -> search_sops | What should I do with damaged inventory? -> none | How do I clean up a spill? -> none"
+    }
+  },
+  {
+    "role": "llm",
+    "candidate": "LLAMA_TOOL_CALLING_1B_INST_Q4_K_M",
+    "ok": false,
+    "baselineMB": 147,
+    "loadSeconds": 11.5,
+    "loadedMB": 1880,
+    "deltaMB": 1733,
+    "error": "[TextLlm] generationParams.tool_choice demanded a tool call, but the chat template did not render the tool definitions"
   }
 ]

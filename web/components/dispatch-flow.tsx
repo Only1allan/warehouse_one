@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, upload } from "@/lib/api-client";
 import type { DispatchReport, Order, OrderSummary } from "@/lib/services/dispatch";
 import type { ExtractedDocument } from "@/lib/services/document-reading";
+import { DOCUMENT_MAX_EDGE, resizeImage } from "@/lib/image-resize";
 import { Icon } from "./icons";
 import { QuantityField } from "./quantity-field";
 import { Button, Panel, Skeleton, StatusPill, type Status } from "./ui";
@@ -62,7 +63,7 @@ export function DispatchFlow() {
     setSheet(null);
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", await resizeImage(file, DOCUMENT_MAX_EDGE), "loading-sheet.jpg");
       const result = await upload<ExtractedDocument>("/api/dispatch/extract", form);
       setSheet(result);
       if (result.matchedOrderNumber) await choose(result.matchedOrderNumber);

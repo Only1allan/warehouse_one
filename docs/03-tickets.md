@@ -133,11 +133,11 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] A script runs each candidate on the fixtures and records memory and latency.
-- [ ] Chosen model per role, with the reason, in the spec's model table.
-- [ ] Licences recorded for every chosen model.
-- [ ] Total resident memory with the chosen models fits the 8 GB machine with headroom.
-- [ ] Candidates that fail the bar are listed with why.
+- [x] A script runs each candidate on the fixtures and records memory and latency.
+- [x] Chosen model per role, with the reason, in the spec's model table.
+- [x] Licences recorded for every chosen model.
+- [x] Total resident memory with the chosen models fits the 8 GB machine with headroom.
+- [x] Candidates that fail the bar are listed with why.
 
 ---
 
@@ -165,12 +165,12 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Stock and location questions return correct database figures even if the fake model's prose contains different numbers (test).
-- [ ] Ambiguous match returns candidates and does not guess (test).
-- [ ] Unknown product returns a not-found message (test).
-- [ ] The model has no tool that can write (test).
-- [ ] Follow-up question resolves from the previous product (test).
-- [ ] Streaming, record card and stop button work in the browser with the real model.
+- [x] Stock and location questions return correct database figures even if the fake model's prose contains different numbers (test).
+- [x] Ambiguous match returns candidates and does not guess (test).
+- [x] Unknown product returns a not-found message (test).
+- [x] The model has no tool that can write (test).
+- [x] Follow-up question resolves from the previous product (test).
+- [x] Streaming, record card and stop button work in the browser with the real model.
 
 ---
 
@@ -182,10 +182,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Below-minimum returns exactly the seeded products at or below minimum (test).
-- [ ] Receiving schedule returns the POs due on the requested date, defaulting to today (test).
-- [ ] PO lookup returns header and lines, and not-found for an unknown PO (test).
-- [ ] Cards show the records behind each answer.
+- [x] Below-minimum returns exactly the seeded products at or below minimum (test).
+- [x] Receiving schedule returns the POs due on the requested date, defaulting to today (test).
+- [x] PO lookup returns header and lines, and not-found for an unknown PO (test).
+- [x] Cards show the records behind each answer.
 
 ---
 
@@ -197,11 +197,11 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Ingest step builds the SOP index from the Markdown files and can be re-run.
-- [ ] A relevant question returns an answer with at least one citation (document and section).
-- [ ] An out-of-scope question returns the fixed refusal, not a model guess (test with fake retrieval).
-- [ ] Safety questions return safety-document citations.
-- [ ] Answers stream, and the stop button works.
+- [x] Ingest step builds the SOP index from the Markdown files and can be re-run.
+- [x] A relevant question returns an answer with at least one citation (document and section).
+- [x] An out-of-scope question returns the fixed refusal, not a model guess (test with fake retrieval).
+- [x] Safety questions return safety-document citations.
+- [x] Answers stream, and the stop button works.
 
 ---
 
@@ -229,11 +229,11 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Discrepancy covers short, over, exact, missing-line and unexpected-line cases (tests).
-- [ ] Nothing changes stock until the clerk confirms (test).
-- [ ] Confirmation updates stock, last-moved, event and exception (test).
-- [ ] The 150 versus 142 demo case produces "missing 8".
-- [ ] UI shows the report with status colours.
+- [x] Discrepancy covers short, over, exact, missing-line and unexpected-line cases (tests).
+- [x] Nothing changes stock until the clerk confirms (test).
+- [x] Confirmation updates stock, last-moved, event and exception (test).
+- [x] The 150 versus 142 demo case produces "missing 8".
+- [x] UI shows the report with status colours.
 
 ---
 
@@ -261,10 +261,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Variance is correct for negative, positive and zero cases (tests).
-- [ ] Confirming a count with variance raises an exception and does not change stock (test).
-- [ ] Adjust stock changes stock and writes an event (test).
-- [ ] The 35 versus 31 demo case works end to end.
+- [x] Variance is correct for negative, positive and zero cases (tests).
+- [x] Confirming a count with variance raises an exception and does not change stock (test).
+- [x] Adjust stock changes stock and writes an event (test).
+- [x] The 35 versus 31 demo case works end to end.
 
 ---
 
@@ -276,11 +276,11 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] A shelf photo produces a proposed integer, or "unable to estimate".
-- [ ] The proposal never becomes a record without confirmation (test).
-- [ ] The photo is stored and linked to the count.
-- [ ] Manual count remains available at every step.
-- [ ] Accuracy on the shelf fixtures is measured and recorded.
+- [x] A shelf photo produces a proposed integer, or "unable to estimate".
+- [x] The proposal never becomes a record without confirmation (test).
+- [x] The photo is stored and linked to the count.
+- [x] Manual count remains available at every step.
+- [x] Accuracy on the shelf fixtures is measured and recorded.
 
 ---
 
@@ -308,10 +308,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Receipts with discrepancy and counts with variance appear automatically (test).
-- [ ] Equipment issues appear in the same list.
-- [ ] Filters by type and shift work.
-- [ ] Each row links back to the underlying record.
+- [x] Receipts with discrepancy and counts with variance appear automatically (test).
+- [x] Equipment issues appear in the same list.
+- [x] Filters by type and shift work.
+- [x] Each row links back to the underlying record.
 
 ---
 
@@ -338,9 +338,9 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Each rule is correct at and either side of its threshold (tests).
-- [ ] Seeded data produces at least one finding per category.
-- [ ] Recommendations are fixed templates, and the model cannot alter numbers.
+- [x] Each rule is correct at and either side of its threshold (tests).
+- [x] Seeded data produces at least one finding per category.
+- [x] Recommendations are fixed templates, and the model cannot alter numbers.
 
 ---
 
@@ -352,9 +352,9 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Only events inside the shift window are included (test).
-- [ ] Structured numbers are displayed beside the prose.
-- [ ] The summary works with the network off.
+- [x] Only events inside the shift window are included (test).
+- [x] Structured numbers are displayed beside the prose.
+- [x] The summary works with the network off.
 
 ---
 
@@ -366,10 +366,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Shortfall, exact and over-loaded cases are correct (tests, reusing the discrepancy behaviour).
-- [ ] The 50 versus 48 demo case produces "missing 2".
-- [ ] Nothing changes until the clerk confirms (test).
-- [ ] The loading-sheet photo path works through the shared document-reading capability.
+- [x] Shortfall, exact and over-loaded cases are correct (tests, reusing the discrepancy behaviour).
+- [x] The 50 versus 48 demo case produces "missing 2".
+- [x] Nothing changes until the clerk confirms (test).
+- [x] The loading-sheet photo path works through the shared document-reading capability.
 
 ---
 
@@ -412,12 +412,12 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Seeded users exist for all four roles, each able to sign in with their documented demo password (test).
-- [ ] Wrong passwords and unknown users are rejected with the same message (test).
-- [ ] Session tokens cannot be forged, altered or reused after expiry (tests).
-- [ ] Every API route that reads or changes warehouse data rejects a request with no valid session (401).
-- [ ] The role permissions matrix is enforced on the server (tests for each capability and role).
-- [ ] The actor on every event, receipt, count and exception is the signed-in user.
+- [x] Seeded users exist for all four roles, each able to sign in with their documented demo password (test).
+- [x] Wrong passwords and unknown users are rejected with the same message (test).
+- [x] Session tokens cannot be forged, altered or reused after expiry (tests).
+- [x] Every API route that reads or changes warehouse data rejects a request with no valid session (401).
+- [x] The role permissions matrix is enforced on the server (tests for each capability and role).
+- [x] The actor on every event, receipt, count and exception is the signed-in user.
 
 ---
 
@@ -429,11 +429,11 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] `/` shows the landing page to everyone, with a sign-in call to action (and "Open the app" when already signed in).
-- [ ] `/signin` lists the four demo logins and signs in with either typed or one-tap credentials.
-- [ ] Wrong credentials show a plain error message and keep the user on the page.
-- [ ] Neither page requests any external origin.
-- [ ] Both pages are usable on a phone-sized screen and with keyboard only.
+- [x] `/` shows the landing page to everyone, with a sign-in call to action (and "Open the app" when already signed in).
+- [x] `/signin` lists the four demo logins and signs in with either typed or one-tap credentials.
+- [x] Wrong credentials show a plain error message and keep the user on the page.
+- [x] Neither page requests any external origin.
+- [x] Both pages are usable on a phone-sized screen and with keyboard only.
 
 ---
 
@@ -445,9 +445,9 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Each role's home shows figures computed from the database (tests for each figure).
-- [ ] Navigation shows only destinations the role may use, and direct links to others show a clear "not available for your role" page.
-- [ ] Switching user changes the home screen and the navigation.
+- [x] Each role's home shows figures computed from the database (tests for each figure).
+- [x] Navigation shows only destinations the role may use, and direct links to others show a clear "not available for your role" page.
+- [x] Switching user changes the home screen and the navigation.
 
 ---
 
@@ -459,10 +459,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Stock records can be searched and show movement history for each product.
-- [ ] A count with variance appears in a reconciliation list, and approving it adjusts stock and writes an event (declining records the decision and leaves stock unchanged).
-- [ ] Only roles with the capability can approve (tests).
-- [ ] The cycle-count flow from ticket 12 is available to this role.
+- [x] Stock records can be searched and show movement history for each product.
+- [x] A count with variance appears in a reconciliation list, and approving it adjusts stock and writes an event (declining records the decision and leaves stock unchanged).
+- [x] Only roles with the capability can approve (tests).
+- [x] The cycle-count flow from ticket 12 is available to this role.
 
 ---
 
@@ -474,10 +474,10 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Shipment list shows each order's status and loaded versus ordered quantities.
-- [ ] Dispatch accuracy and shortfalls are computed from the dispatch records (tests).
-- [ ] Process compliance figures are computed from receipts and dispatches (tests).
-- [ ] Dispatch verification and shift handover are available to this role.
+- [x] Shipment list shows each order's status and loaded versus ordered quantities.
+- [x] Dispatch accuracy and shortfalls are computed from the dispatch records (tests).
+- [x] Process compliance figures are computed from receipts and dispatches (tests).
+- [x] Dispatch verification and shift handover are available to this role.
 
 ---
 
@@ -489,8 +489,25 @@ Test approach for every ticket: behaviour tested at the application-service seam
 
 **Status:** ready-for-agent
 
-- [ ] Operator: sign in, ask, receive, count, voice, dispatch verification.
-- [ ] Supervisor: exceptions, health, handover, adjust stock.
-- [ ] Inventory Controller: stock records, reconcile a count.
-- [ ] Logistics Manager: shipments, dispatch accuracy, handover.
-- [ ] A user cannot reach another role's API or screen.
+- [x] Operator: sign in, ask, receive, count, voice, dispatch verification.
+- [x] Supervisor: exceptions, health, handover, adjust stock.
+- [x] Inventory Controller: stock records, reconcile a count.
+- [x] Logistics Manager: shipments, dispatch accuracy, handover.
+- [x] A user cannot reach another role's API or screen.
+
+---
+
+# 28: Per-persona sidebars, testing guide, offline and phone testing
+
+**What to build:** (user feedback, 2026-10-26) Each persona's sidebar reflects the features the brief lists for that persona, so no two look alike. A guide and tools show how to test every backend function for every role, and how to test offline on the laptop and on a phone.
+
+**Blocked by:** 22, 24
+
+**Status:** ready-for-agent
+
+- [x] Each sidebar is grouped by that persona's three needs from the brief, and no two personas share a sidebar (unit and browser tests).
+- [x] Missing persona features added: Safety, Hands-free, Count plan, Reconciliation, Stock approvals, Operations feed, Dispatch accuracy, Compliance.
+- [x] `npm run smoke:api` checks every endpoint as every persona (allowed and refused) and each role's workflows, with `--ai` for the AI features.
+- [x] `docs/05-testing-guide.md` gives a manual checklist per persona and API examples.
+- [x] `docs/06-offline-and-devices.md` explains laptop offline use, phone over a local hotspot (HTTPS for camera and mic), WSL networking, and why no APK is needed.
+- [ ] `npm run offline:check` passes with no network.

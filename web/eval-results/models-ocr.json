@@ -13,5 +13,20 @@
       "meanSecondsPerImage": 48.83,
       "sample": "kenya packaging ltd delivery note po box 4412 nairobi kenya no dn 88213 date 2026 10 28 your po no 4471 supplier kenya packaging ltd item code description qty unit 100201 corrugated carton 40x30x30 15"
     }
+  },
+  {
+    "role": "ocr",
+    "candidate": "OCR_LATIN {\"magRatio\":1.0,\"defaultRotationAngles\":[]}",
+    "ok": true,
+    "baselineMB": 176,
+    "loadSeconds": 4.7,
+    "loadedMB": 2008,
+    "deltaMB": 1832,
+    "metrics": {
+      "keyFieldRecallPct": 100,
+      "wordRecallPct": 97.2,
+      "meanSecondsPerImage": 18.56,
+      "sample": "kenya packaging ltd delivery note po box 4412 nairobi kenya no dn 88213 date 2026 10 28 your po no 4471 supplier kenya packaging ltd item code description qty unit 100201 corrugated carton 40x30x30 15"
+    }
   }
 ]

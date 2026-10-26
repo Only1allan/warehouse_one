@@ -6,6 +6,7 @@ import { computeVariance } from "@/lib/domain/variance";
 import type { CountRecord, CountTarget } from "@/lib/services/counting";
 import { Icon } from "./icons";
 import { upload } from "@/lib/api-client";
+import { DOCUMENT_MAX_EDGE, resizeImage, VISION_MAX_EDGE } from "@/lib/image-resize";
 import { useAuth } from "./auth-context";
 import { QuantityField } from "./quantity-field";
 import { Button, Panel, Skeleton, StatusPill } from "./ui";
@@ -83,7 +84,8 @@ export function CountFlow() {
     setPhotoUrl(urlRef.current);
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", await resizeImage(file, DOCUMENT_MAX_EDGE), "shelf.jpg");
+      form.append("visionImage", await resizeImage(file, VISION_MAX_EDGE), "shelf-small.jpg");
       form.append("sku", target.sku);
       form.append("locationId", target.locationId);
       const result = await upload<{ photoPath: string; proposedQty: number | null; note: string | null }>(

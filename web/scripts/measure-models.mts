@@ -115,6 +115,7 @@ async function llm(names: string[]) {
           ],
           stream: true,
           tools,
+          kvCache: "measure-router",
           generationParams: { tool_choice: process.env.TC ?? "required", predict: 200, temp: 0, ...(name.startsWith("QWEN3") ? { reasoning_budget: 0 } : {}) },
         } as any);
         let call: { name: string; arguments: Record<string, unknown> } | null = null;
@@ -301,11 +302,13 @@ async function ocr(names: string[]) {
 
 async function vision(pairs: Array<[string, string]>) {
   const manifest = JSON.parse(fs.readFileSync(path.join(fixtures, "manifest.json"), "utf8"));
-  const shelves = manifest.shelves as Array<{ file: string; count: number }>;
+  const shelves = (manifest.shelves as Array<{ file: string; count: number }>).map((s) =>
+    process.env.VISION_SMALL ? { ...s, file: s.file.replace("images/", "images/small/") } : s,
+  );
   for (const [name, proj] of pairs) {
     await measure(
       "vision",
-      name,
+      process.env.VISION_SMALL ? `${name} (512px)` : name,
       () => sdk.loadModel({ modelSrc: constant(name), modelType: "llm", modelConfig: { ctx_size: 2048, projectionModelSrc: constant(proj) } } as any) as Promise<string>,
       async (modelId) => {
         let exact = 0;

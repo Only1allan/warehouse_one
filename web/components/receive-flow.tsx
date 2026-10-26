@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ExtractedDocument } from "@/lib/services/document-reading";
+import { DOCUMENT_MAX_EDGE, resizeImage } from "@/lib/image-resize";
 import type {
   PurchaseOrder,
   PurchaseOrderSummary,
@@ -86,7 +87,7 @@ export function ReceiveFlow() {
     setNote(null);
     try {
       const body = new FormData();
-      body.append("image", file);
+      body.append("image", await resizeImage(file, DOCUMENT_MAX_EDGE), "delivery-note.jpg");
       const response = await fetch("/api/receiving/extract", { method: "POST", body });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message ?? "I could not read that photo.");

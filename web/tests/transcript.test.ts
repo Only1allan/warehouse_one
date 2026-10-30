@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkTranscript } from "@/lib/domain/transcript";
+import { checkTranscript, correctDomainTerms, normalizeSpokenNumbers } from "@/lib/domain/transcript";
 
 describe("checkTranscript", () => {
   it.each([
@@ -41,5 +41,45 @@ describe("checkTranscript", () => {
   it("keeps a short but meaningful question", () => {
     expect(checkTranscript("Stock of cement").ok).toBe(true);
     expect(checkTranscript("PO 4471").ok).toBe(true);
+  });
+});
+
+describe("normalizeSpokenNumbers", () => {
+  it("turns spoken digits into a number", () => {
+    expect(normalizeSpokenNumbers("What is on purchase order four four seven one?")).toBe(
+      "What is on purchase order 4471?",
+    );
+    expect(normalizeSpokenNumbers("SKU zero zero one two five four")).toBe("SKU 001254");
+  });
+
+  it("leaves ordinary text unchanged", () => {
+    expect(normalizeSpokenNumbers("How many generators do we have?")).toBe(
+      "How many generators do we have?",
+    );
+  });
+});
+
+describe("correctDomainTerms", () => {
+  it("corrects the observed ASR error 'graders'", () => {
+    expect(correctDomainTerms("How many graders do we have?")).toEqual({
+      text: "How many generators do we have?",
+      corrections: [{ from: "graders", to: "generators" }],
+    });
+  });
+
+  it("corrects a singular or split generator word", () => {
+    expect(correctDomainTerms("Where is the grader stored?").text).toBe(
+      "Where is the generator stored?",
+    );
+    expect(correctDomainTerms("The gen set is in aisle B.").text).toBe(
+      "The generator is in aisle B.",
+    );
+  });
+
+  it("leaves a normal transcript alone", () => {
+    expect(correctDomainTerms("Show today's receiving schedule.")).toEqual({
+      text: "Show today's receiving schedule.",
+      corrections: [],
+    });
   });
 });

@@ -57,9 +57,10 @@ npm run phone      # terminal 2: prints https://<laptop-ip>:3443
   [wsl2]
   networkingMode=mirrored
   ```
-- *Or a port forward.* In an Administrator PowerShell (replace `<wsl-ip>` with the output of `hostname -I` in WSL):
+- *Or a port forward.* The repository includes `web/scripts/windows-portproxy.ps1`. Copy it to Windows, open **PowerShell as Administrator**, and run it. It reads the current Windows and WSL addresses, forwards port 3443, adds the firewall rule, and prints the exact phone URL. Re-run it after a WSL restart, because the WSL address can change.
+  The manual equivalent (replace `<wsl-ip>` with the output of `hostname -I` in WSL and `<windows-ip>` with the Wi-Fi address from `ipconfig`) is:
   ```powershell
-  netsh interface portproxy add v4tov4 listenport=3443 listenaddress=0.0.0.0 connectport=3443 connectaddress=<wsl-ip>
+  netsh interface portproxy add v4tov4 listenport=3443 listenaddress=<windows-ip> connectport=3443 connectaddress=<wsl-ip>
   New-NetFirewallRule -DisplayName "Warehouse Copilot" -Direction Inbound -LocalPort 3443 -Protocol TCP -Action Allow
   ```
   Then use the **Windows** IP address (from `ipconfig`) on the phone.
@@ -68,6 +69,11 @@ npm run phone      # terminal 2: prints https://<laptop-ip>:3443
 - photograph a delivery note or a shelf with the phone camera (Receive delivery, Count a shelf),
 - use **Hands-free** with the phone microphone,
 - add the page to the home screen so it opens like an app.
+
+**If the phone says "Can't reach the Copilot server" (or "Failed to fetch") after you go offline**, the phone has lost its route to the laptop, not to the internet:
+- Turn off only the *internet* (mobile data on the hotspot phone, or the router's uplink). Do not turn off the laptop's Wi-Fi or switch networks, because that removes the laptop's address.
+- If the laptop joined a different network, its address changed. Re-run `windows-portproxy.ps1` (WSL), then `npm run phone`, and open the new address.
+- Check that `npm run start` is still running. `npm run phone` only forwards to it.
 
 Photos are shrunk on the phone before they are sent (1280 px for documents, 512 px for counting), so this works well over hotspot Wi-Fi.
 

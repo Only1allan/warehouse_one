@@ -1,10 +1,12 @@
+import { request } from "@/lib/api-client";
+
 export async function streamEvents<T>(
   url: string,
   body: unknown,
   signal: AbortSignal,
   onEvent: (event: T) => void,
 ): Promise<void> {
-  const response = await fetch(url, {
+  const response = await request(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

@@ -22,5 +22,13 @@
   { "question": "What PPE is required in Zone C?", "expectedTool": "search_sops" },
   { "question": "How do I process returns?", "expectedTool": "search_sops" },
   { "question": "What is the receiving process?", "expectedTool": "search_sops" },
-  { "question": "How do I clean up a spill?", "expectedTool": "search_sops" }
+  { "question": "How do I clean up a spill?", "expectedTool": "search_sops" },
+  { "question": "Give me the forklift inspection checklist.", "expectedTool": "search_sops" },
+  { "question": "Tell me a joke", "expectedTool": "not_warehouse" },
+  { "question": "What is the capital of France?", "expectedTool": "not_warehouse" },
+  {
+    "question": "What is on purchase order four four seven one?",
+    "expectedTool": "get_po",
+    "argIncludes": { "po_number": "4471" }
+  }
 ]

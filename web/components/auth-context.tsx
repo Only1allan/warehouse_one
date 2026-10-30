@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { readJson, request } from "@/lib/api-client";
 import { can, type Capability } from "@/lib/auth/capabilities";
 import type { AuthUser } from "@/lib/services/auth";
 
@@ -33,15 +34,15 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null);
 
-async function post(url: string, body?: unknown) {
-  const response = await fetch(url, {
+async function post(url: string, body?: unknown): Promise<{ user: AuthUser; shiftId: string | null }> {
+  const response = await request(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.error?.message ?? "Something went wrong.");
-  return data;
+  const data = await readJson(response);
+  if (!response.ok || !data) throw new Error(data?.error?.message ?? "Something went wrong.");
+  return data as unknown as { user: AuthUser; shiftId: string | null };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -124,7 +124,7 @@ export function HeroVisual() {
                   transition={{ ...springSoft, delay: 1.1 }}
                 >
                   <p className="max-w-[85%] rounded-panel rounded-br-sm bg-signal px-4 py-2.5 font-medium">
-                    How many generators do we have?
+                    How many pallets of cement do we have?
                   </p>
                 </motion.div>
                 <motion.div
@@ -133,16 +133,22 @@ export function HeroVisual() {
                   transition={{ duration: 0.6, ease: easeOut, delay: 1.6 }}
                 >
                   <div className="rounded-panel border border-line bg-surface p-3.5 text-[0.95rem]">
-                    <p>We currently have 43 units of Portable Generator 5kW in stock.</p>
+                    <p className="mb-2 text-xs font-medium text-soft">Example answer from the demo data</p>
+                    <p>We currently have 85 pallets of Cement 50kg (pallet of 40 bags) in stock.</p>
                     <CopilotCard
                       onPick={noop}
                       card={{
                         kind: "stock",
-                        product: { sku: "001254", name: "Portable Generator 5kW", unit: "unit", category: "Power Equipment" },
-                        total: 43,
-                        minStock: 10,
+                        product: {
+                          sku: "600110",
+                          name: "Cement 50kg (pallet of 40 bags)",
+                          unit: "pallet",
+                          category: "Building Materials",
+                        },
+                        total: 85,
+                        minStock: 20,
                         belowMinimum: false,
-                        locations: [{ locationId: "B-4-2", qty: 43, lastMovedAt: "2026-10-25T09:12:00.000Z" }],
+                        locations: [{ locationId: "A-3-2", qty: 85, lastMovedAt: "2026-10-25T09:12:00.000Z" }],
                       }}
                     />
                   </div>

@@ -49,13 +49,14 @@ export const COPILOT_TOOLS: ToolDefinition[] = [
   {
     name: "get_receiving_schedule",
     description:
-      "Deliveries expected on a day, with supplier and purchase order. Use for 'receiving schedule', 'what is arriving' or 'deliveries due'.",
+      "Deliveries expected on a day, with supplier and purchase order, or open deliveries that are late. Use for 'receiving schedule', 'what is arriving', 'deliveries due', and for anything 'late', 'overdue' or 'behind schedule'.",
     parameters: {
       type: "object",
       properties: {
         date: {
           type: "string",
-          description: "'today', 'tomorrow' or a date as YYYY-MM-DD. Defaults to today.",
+          description:
+            "'today', 'tomorrow', a date as YYYY-MM-DD, or 'overdue' for late deliveries that are behind schedule. Defaults to today.",
         },
       },
     },

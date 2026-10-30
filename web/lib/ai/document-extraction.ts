@@ -97,6 +97,17 @@ interface ParsedExtraction {
   lines?: unknown;
 }
 
+// "Your PO No. 4472" (OCR often reads O as 0) or "Order No. 5521". "P.O. Box 4412" is not a PO number.
+const REFERENCE_LABEL: Record<DocumentKind, RegExp> = {
+  delivery_note: /\b(?:p\s*\.?\s*[o0]\s*\.?|purchase\s+order)\s*(?:no|number|#)\b\.?\s*:?\s*(\d{3,})/i,
+  loading_sheet: /\b(?:sales\s+)?order\s*(?:no|number|#)\b\.?\s*:?\s*(\d{3,})/i,
+};
+
+/** The order number printed next to its label, read straight from the OCR text. */
+export function labelledReference(kind: DocumentKind, ocrText: string): string | null {
+  return REFERENCE_LABEL[kind].exec(ocrText)?.[1] ?? null;
+}
+
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
@@ -115,7 +126,10 @@ export function buildDocumentRead(kind: DocumentKind, ocrText: string, raw: stri
   const found = (value: string) => value.length > 0 && haystack.includes(squash(value));
   const foundNumber = (n: number) => new RegExp(`(^|[^0-9])${n}([^0-9]|$)`).test(ocrText);
 
-  const reference = typeof parsed.reference === "string" ? parsed.reference.trim() : "";
+  // The small model sometimes copies another number on the page (a P.O. Box or the note's own
+  // number). A number printed next to the order label is stronger evidence, so it wins.
+  const reference =
+    labelledReference(kind, ocrText) ?? (typeof parsed.reference === "string" ? parsed.reference.trim() : "");
   const party = typeof parsed.party === "string" ? parsed.party.trim() : "";
   const rawLines = Array.isArray(parsed.lines) ? (parsed.lines as Array<Record<string, unknown>>) : [];
 

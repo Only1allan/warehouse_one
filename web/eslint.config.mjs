@@ -14,9 +14,14 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-e2e/**",
+    ".next-offline/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated test artifacts are not source code.
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

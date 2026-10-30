@@ -58,32 +58,54 @@ const results: Record<string, unknown> = {
 
 // 1. Tool routing through the real ask pipeline
 log("\n1. Routing questions to the right lookup");
-const cases = JSON.parse(fs.readFileSync(path.join(fixtures, "ask-cases.json"), "utf8")) as Array<{ question: string; expectedTool: string }>;
+type AskCase = {
+  question: string;
+  expectedTool: string;
+  argIncludes?: Record<string, string>;
+};
+const cases = JSON.parse(fs.readFileSync(path.join(fixtures, "ask-cases.json"), "utf8")) as AskCase[];
 let routedRight = 0;
+let argsRight = 0;
 let modelRight = 0;
 const routeTimes: number[] = [];
 const misses: string[] = [];
+const argMisses: string[] = [];
 for (const c of cases) {
   const t0 = Date.now();
-  let tool: { name: string; routedBy: string } | null = null;
+  let tool: { name: string; arguments: Record<string, unknown>; routedBy: string } | null = null;
   for await (const event of askCopilot({ db, model: port, now: () => now }, { message: c.question })) {
-    if (event.type === "tool") tool = { name: event.name, routedBy: event.routedBy };
+    if (event.type === "tool") {
+      tool = { name: event.name, arguments: event.arguments, routedBy: event.routedBy };
+    }
     if (event.type === "card" || event.type === "done") break;
   }
   routeTimes.push(Date.now() - t0);
+  const argsOk =
+    !c.argIncludes ||
+    Object.entries(c.argIncludes).every(([key, expected]) =>
+      String(tool?.arguments[key] ?? "")
+        .toLowerCase()
+        .includes(expected.toLowerCase()),
+    );
   if (tool?.name === c.expectedTool) {
     routedRight++;
     if (tool.routedBy === "model") modelRight++;
-  } else misses.push(`${c.question} -> ${tool?.name ?? "none"}`);
+    if (argsOk) argsRight++;
+    else argMisses.push(`${c.question} -> ${JSON.stringify(tool.arguments)}`);
+  } else {
+    misses.push(`${c.question} -> ${tool?.name ?? "none"} ${JSON.stringify(tool?.arguments ?? {})}`);
+  }
   treeRssMB();
 }
 results.routing = {
   questions: cases.length,
   accuracyPct: r1((100 * routedRight) / cases.length),
   modelOnlyAccuracyPct: r1((100 * modelRight) / cases.length),
+  argAccuracyPct: r1((100 * argsRight) / cases.length),
   firstQuestionMs: routeTimes[0],
   medianMsAfterFirst: [...routeTimes.slice(1)].sort((a, b) => a - b)[Math.floor((routeTimes.length - 1) / 2)],
   misses,
+  argMisses,
 };
 log(JSON.stringify(results.routing));
 
@@ -237,7 +259,7 @@ These are measurements on the synthetic fixtures in \`data/fixtures\`, not produ
 
 | Feature | Model | Result | Speed |
 |---|---|---|---|
-| Routing a question to the right lookup | ${MODELS.llm.constant} | ${R.routing.accuracyPct}% of ${R.routing.questions} questions (${R.routing.modelOnlyAccuracyPct}% by the model alone, the rest by the rule-based fallback) | first question ${Math.round(Number(R.routing.firstQuestionMs) / 1000)} s, then about ${r1(Number(R.routing.medianMsAfterFirst) / 1000)} s (attention cache) |
+| Routing a question to the right lookup | ${MODELS.llm.constant} | ${R.routing.accuracyPct}% of ${R.routing.questions} questions (${R.routing.modelOnlyAccuracyPct}% by the model alone, the rest by the rule-based fallback); arguments right ${R.routing.argAccuracyPct}% | first question ${Math.round(Number(R.routing.firstQuestionMs) / 1000)} s, then about ${r1(Number(R.routing.medianMsAfterFirst) / 1000)} s (attention cache) |
 | Finding the right procedure | ${MODELS.embeddings.constant} | top result right ${R.sop.top1Pct}%, right one in the top 3 ${R.sop.top3Pct}% | ${R.sop.meanRetrieveMs} ms |
 | Refusing questions with no procedure | same | ${R.sop.offTopicRefusedPct}% of off-topic questions refused, ${R.sop.inScopeAnsweredPct}% of real ones answered (threshold ${R.sop.threshold}) | |
 | Speech to text | ${MODELS.speech.constant} | ${R.speech.meanWerPct}% word error rate, ${R.speech.exactClips} of ${R.speech.clips} clips exact | ${R.speech.meanSecondsPerClip} s per clip |
@@ -247,6 +269,8 @@ These are measurements on the synthetic fixtures in \`data/fixtures\`, not produ
 Peak memory of the app's AI process tree during the run: **${peakMB} MB**.
 
 Routing questions it got wrong: ${(R.routing.misses as string[]).length ? (R.routing.misses as string[]).join("; ") : "none"}.
+
+Questions routed to the right tool with wrong arguments: ${(R.routing.argMisses as string[]).length ? (R.routing.argMisses as string[]).join("; ") : "none"}.
 
 Notes: photo counting is approximate, so the app always shows the count as a proposal for the operator to check, and the variance is worked out from the number the operator confirms. Stock numbers never come from a model.
 `;

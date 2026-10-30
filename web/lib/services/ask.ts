@@ -54,6 +54,13 @@ const OFF_TOPIC =
 const PROCEDURE_HINT =
   /\b(procedure|policy|checklist|sop|safety data sheet|sds|weight limit|how much can (one|a) person|how much can i (lift|carry))\b/i;
 
+/** "What stock is behind schedule?", "Which deliveries are late?", "Any overdue POs?" */
+const LATE_DELIVERY =
+  /\b(behind\s+schedule|overdue|past\s+due|late|delayed|running\s+late|not\s+(yet\s+)?(arrived|delivered|received))\b/i;
+
+/** "How do I…" / "What should I do…" asks for a procedure even when it mentions deliveries. */
+const ASKS_HOW = /how\s+(do|should|can)\s+i|what\s+(should|do)\s+i/i;
+
 /** Narrow deterministic check for obvious general-knowledge questions the 1B router is known to mishandle. */
 export function isOffTopic(message: string): boolean {
   return OFF_TOPIC.test(message);
@@ -70,6 +77,12 @@ export function guardRoute(
 ): { name: string; arguments: Record<string, unknown> } | null {
   const fallback = fallbackRoute(message);
   if (!fallback) return null;
+
+  // "Behind schedule" is about deliveries, never a product name. The 1B model has sent
+  // "What stock is behind schedule?" to get_stock_level as a product search.
+  if (fallback.arguments.date === "overdue" && call.arguments.date !== "overdue") {
+    return fallback;
+  }
 
   // Same tool: keep the model's arguments unless they are clearly wrong.
   if (fallback.name === call.name) {
@@ -133,10 +146,17 @@ export function fallbackRoute(message: string): { name: string; arguments: Recor
   }
   const po = message.match(PO_PATTERN);
   if (po) return { name: "get_po", arguments: { po_number: po[1] } };
+  // "What should I do with a late delivery?" is a procedure question, not a list.
+  if (LATE_DELIVERY.test(message) && !ASKS_HOW.test(message)) {
+    return { name: "get_receiving_schedule", arguments: { date: "overdue" } };
+  }
   if (/(below|under)\s+min|low\s+(on\s+)?stock|running\s+low|reorder|re-order|need\s+(to\s+)?restock/i.test(message)) {
     return { name: "list_below_minimum", arguments: {} };
   }
-  if (/receiving\s+schedule|deliver(y|ies)|arriving|due\s+(today|tomorrow)|expected\s+today/i.test(message)) {
+  if (
+    /receiving\s+schedule|deliver(y|ies)|arriving|due\s+(today|tomorrow)|expected\s+today/i.test(message) &&
+    !ASKS_HOW.test(message)
+  ) {
     return { name: "get_receiving_schedule", arguments: { date: /tomorrow/i.test(message) ? "tomorrow" : "today" } };
   }
   if (/\bwhere\b|which\s+(shelf|aisle|rack)|locat(ed|ion)|\bfind\b/i.test(message)) {
@@ -256,7 +276,23 @@ export async function* askCopilot(
     return;
   }
 
-  const outcome = executeDatabaseTool(deps.db, now, call.name, call.arguments, context);
+  let outcome = executeDatabaseTool(deps.db, now, call.name, call.arguments, context);
+
+  // The model treated the question as a product name and nothing matched ("stock behind
+  // schedule"). Rather than a dead end, try the rule router once if it reads the question
+  // as a different lookup.
+  if (outcome?.card.kind === "not_found" && outcome.card.what === "product") {
+    const retry = fallbackRoute(normalizedMessage);
+    if (retry && retry.name !== call.name && retry.name !== "get_stock_level" && retry.name !== "find_location") {
+      yield { type: "tool", name: retry.name, arguments: retry.arguments, routedBy: "fallback" };
+      if (retry.name === "search_sops") {
+        yield* answerFromSops(deps, retry.arguments, normalizedMessage, signal);
+        return;
+      }
+      outcome = executeDatabaseTool(deps.db, now, retry.name, retry.arguments, context) ?? outcome;
+    }
+  }
+
   if (!outcome) {
     yield { type: "token", text: HELP };
     yield { type: "done", reason: "complete" };
@@ -266,6 +302,19 @@ export async function* askCopilot(
   yield { type: "token", text: outcome.text };
   if (outcome.context) yield { type: "context", context: { ...context, ...outcome.context } };
   yield { type: "done", reason: "complete" };
+}
+
+/**
+ * True when an answer is substantially copied from the retrieved passages: at least 80% of
+ * its content words appear in them. Used only to rescue an answer the model prefixed with
+ * NOT_COVERED, so a refusal is never overturned by invented text.
+ */
+export function isGroundedIn(answer: string, passages: Array<{ text: string }>): boolean {
+  const words = (value: string) => value.toLowerCase().match(/[a-z0-9-]{4,}/g) ?? [];
+  const source = new Set(passages.flatMap((p) => words(p.text)));
+  const used = words(answer);
+  if (used.length < 6) return false;
+  return used.filter((w) => source.has(w)).length / used.length >= 0.8;
 }
 
 async function* answerFromSops(
@@ -318,7 +367,9 @@ async function* answerFromSops(
       continue;
     }
     held += event.text;
-    if (held.length >= 14) {
+    // A leading NOT_COVERED is held to the end: the 1B model sometimes writes it and then
+    // answers from the passages anyway ("NOT_COVERED 1. Check that the customer has...").
+    if (held.length >= 14 && !/^\s*NOT_COVERED/i.test(held)) {
       if (/NOT_COVERED/i.test(held)) {
         yield* refuse();
         return;
@@ -329,11 +380,13 @@ async function* answerFromSops(
     }
   }
   if (!decided) {
-    if (!held.trim() || /NOT_COVERED/i.test(held)) {
+    const rest = held.replace(/^\s*NOT_COVERED[\s.:\-]*/i, "").replace(/^\s*ANSWER:\s*/i, "").trim();
+    const covered = !/NOT_COVERED/i.test(held) || isGroundedIn(rest, usable);
+    if (!rest || !covered) {
       yield* refuse();
       return;
     }
-    streamed = held.replace(/^\s*ANSWER:\s*/i, "");
+    streamed = rest;
     yield { type: "token", text: streamed };
   }
   if (signal?.aborted) {

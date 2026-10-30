@@ -72,13 +72,23 @@ The database is created and seeded automatically on first request; never commit 
 
 No APK is needed: the AI runs on the laptop and the phone only uses its browser. See [docs/06-offline-and-devices.md](docs/06-offline-and-devices.md).
 
-**What needs a network:** only `npm install` and the one-time model download. Nothing at runtime. There are no CDN fonts (Poppins is bundled), no analytics and no remote assets, and Next.js telemetry is off.
+### Features that need a network
+
+| Needs a network | When |
+|---|---|
+| `npm install` | Once, during setup |
+| **Prepare offline** (downloads the QVAC models, about 3 GB) | Once, before going offline |
+| Phone mode (`npm run phone`) | A **local** Wi-Fi or hotspot between the phone and the laptop. No internet is needed |
+
+Nothing else needs a network. Every AI feature runs with the internet off, and so does everything else: the copilot, procedures, voice, document reading, shelf counting, dispatch checks, the handover, sign-in and all data. There are no CDN fonts (Poppins is bundled), no analytics and no remote images (photos are bundled), and Next.js telemetry is off. This is not a finance entry, so there is no WDK integration and there are no network-dependent finance actions.
+
+If a phone shows "Can't reach the Copilot server" (previously "Failed to fetch") after you go offline, the phone has lost its route to the laptop, not to the internet. Keep the local Wi-Fi or hotspot on and turn off only its internet. If the laptop's IP address changed, run `npm run phone` again and use the new address. See [docs/06-offline-and-devices.md](docs/06-offline-and-devices.md).
 
 ## Testing
 
 | Command | What it checks |
 |---|---|
-| `npm test` | 313 unit tests of every rule, service, permission and trust guarantee |
+| `npm test` | 347 unit tests of every rule, service, permission and trust guarantee |
 | `npm run smoke:api` | Every API as every persona: allowed, refused (403), and each role's workflows. Add `-- --ai` for the AI features |
 | `npm run test:e2e` | 77 browser tests: landing, sign in, every persona's screens and features, access control, phone layout, no external requests |
 | `npm run offline:check` | The full backend and AI check with no network |
@@ -88,7 +98,8 @@ A role-by-role manual checklist is in [docs/05-testing-guide.md](docs/05-testing
 
 ## QVAC integration
 
-- **SDK:** `@qvac/sdk` 0.22.0 (Apache-2.0), running inside the Next.js server's Node runtime.
+- **SDK:** `@qvac/sdk` 0.22.0 (Apache-2.0), running inside the Next.js server's Node runtime. It brings `@qvac/llm-llamacpp` 0.61.2, `@qvac/embed-llamacpp` 0.48.2, `@qvac/asr-ggml` 0.10.0, `@qvac/ocr-ggml` 0.29.1 and `@qvac/rag` 0.8.1. Tested on Node.js 24.22.
+- **Model download and setup:** start the app, sign in, open **Readiness** and choose **Prepare offline**. It calls QVAC `downloadAsset` for each model and stores the files in `~/.qvac/models`. When every row says **Ready**, the network is no longer needed. The models are not committed to the repository.
 - **Files that use QVAC:** `web/lib/ai/qvac/qvac-model-port.ts` (every QVAC call), `web/lib/ai/qvac/models.ts` (model choices), `web/lib/ai/qvac/model-manager.ts` (loading, resident models, idle unload). Everything else talks to the `ModelPort` interface in `web/lib/ai/model-port.ts`.
 - **QVAC capabilities used:** text generation with tool calling, grammar-constrained tool choice, the KV cache, and JSON-schema structured output; embeddings with the built-in RAG workspace; Parakeet speech to text; OCR; multimodal vision; model download, cache and readiness through `getModelInfo` and `downloadAsset`.
 
@@ -100,7 +111,7 @@ A role-by-role manual checklist is in [docs/05-testing-guide.md](docs/05-testing
 | Reading documents | `OCR_LATIN` (CRAFT detector and Latin recognizer) | about 100 MB | Apache-2.0 (EasyOCR models) | 100% of PO numbers, SKUs and quantities read on the test notes |
 | Shelf count proposal | `SMOLVLM2_500M_MULTIMODAL_Q8_0` and its projector | about 550 MB | Apache-2.0 | Lowest error of four vision models, 6.6 s per 512 px photo |
 
-Every candidate and its numbers are in [docs/04-decisions.md](docs/04-decisions.md). Measured results are in [web/eval-results/RESULTS.md](web/eval-results/RESULTS.md).
+Every candidate and its numbers are in [docs/04-decisions.md](docs/04-decisions.md). The raw model-comparison measurements are in [web/eval-results/](web/eval-results/). `npm run eval` reruns the evaluation on this device and writes a full report to `web/eval-results/RESULTS.md`.
 
 **Device used:** Windows 11 with WSL2 (Ubuntu 26.04), x86_64, 22 CPU threads, about 8 GB RAM for WSL, no GPU. The AI process tree peaks at about 4 to 5 GB with every model loaded (the language and search models stay loaded; speech, OCR and vision load when used and unload after 5 minutes idle).
 
@@ -125,6 +136,7 @@ Everything in this repository was built during the hackathon (24 to 30 October 2
 - [Next.js](https://nextjs.org), React, Tailwind CSS (MIT). The project began from `create-next-app`.
 - [Poppins](https://github.com/itfoundry/Poppins) by Indian Type Foundry (SIL Open Font License, see `web/app/fonts/OFL.txt`).
 - Vitest and Playwright for testing.
+- Photography and portraits from [Unsplash](https://unsplash.com) under the Unsplash License, bundled in `web/assets` (sources listed in `web/assets/CREDITS.md`).
 - All warehouse data, procedures, delivery notes, shelf images and audio clips are synthetic and generated for this project. The audio clips were made with QVAC text-to-speech (Supertonic).
 
 ## Licence

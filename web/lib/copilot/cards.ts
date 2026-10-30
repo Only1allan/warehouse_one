@@ -55,6 +55,9 @@ export interface ScheduleCard {
     poNumber: string;
     supplier: string;
     status: "open" | "received";
+    /** Only for the overdue view. */
+    expectedDate?: string;
+    daysLate?: number;
     lines: Array<{ description: string; qty: number }>;
   }>;
 }

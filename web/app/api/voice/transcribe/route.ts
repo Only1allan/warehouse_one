@@ -1,5 +1,10 @@
 import { getModelPort } from "@/lib/ai/qvac/qvac-model-port";
-import { checkTranscript, TRANSCRIPT_MESSAGES } from "@/lib/domain/transcript";
+import {
+  checkTranscript,
+  correctDomainTerms,
+  normalizeSpokenNumbers,
+  TRANSCRIPT_MESSAGES,
+} from "@/lib/domain/transcript";
 import { AppError } from "@/lib/errors";
 import { handleAuthed } from "@/lib/http";
 
@@ -15,6 +20,16 @@ export function POST(request: Request) {
     if (!check.ok) {
       return Response.json({ text: "", ok: false, reason: check.reason, message: TRANSCRIPT_MESSAGES[check.reason!] });
     }
-    return Response.json({ text: check.text, ok: true });
+
+    // Correct after the hallucination filter so silence/noise can never become a question.
+    const normalized = normalizeSpokenNumbers(check.text);
+    const corrected = correctDomainTerms(normalized);
+
+    return Response.json({
+      text: corrected.text,
+      ok: true,
+      original: check.text,
+      corrections: corrected.corrections,
+    });
   });
 }

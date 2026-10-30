@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDocumentRead, extractionPrompt, ocrBlocksToText } from "@/lib/ai/document-extraction";
+import { buildDocumentRead, extractionPrompt, labelledReference, ocrBlocksToText } from "@/lib/ai/document-extraction";
 
 describe("ocrBlocksToText", () => {
   it("reads blocks top to bottom and left to right, whatever order they arrive in", () => {
@@ -22,6 +22,7 @@ describe("ocrBlocksToText", () => {
 
 describe("buildDocumentRead", () => {
   const ocr = "DELIVERY NOTE Kenya Packaging Ltd Your PO No. 4471\n100201  Corrugated Carton 40x30x30  150  carton\n100305  Stretch Wrap Roll  60  roll";
+  const unlabelled = ocr.replace("Your PO No. 4471", "");
 
   it("trusts values it can find in the OCR text", () => {
     const read = buildDocumentRead(
@@ -45,7 +46,7 @@ describe("buildDocumentRead", () => {
   it("gives low confidence to values that are not in the OCR text (model guesses)", () => {
     const read = buildDocumentRead(
       "delivery_note",
-      ocr,
+      unlabelled,
       JSON.stringify({
         reference: "9999",
         party: "Somebody Else",
@@ -63,9 +64,11 @@ describe("buildDocumentRead", () => {
 
   it("survives broken or empty model output", () => {
     for (const raw of ["not json", "{}", '{"lines":"nope"}', "null"]) {
-      const read = buildDocumentRead("delivery_note", ocr, raw);
+      const read = buildDocumentRead("delivery_note", unlabelled, raw);
       expect(read.lines).toEqual([]);
       expect(read.reference).toEqual({ value: null, confidence: 0 });
+      // The labelled PO number on the page is still read without the model.
+      expect(buildDocumentRead("delivery_note", ocr, raw).reference).toEqual({ value: "4471", confidence: 0.95 });
     }
   });
 
@@ -92,5 +95,27 @@ describe("buildDocumentRead", () => {
   it("asks for the right fields for each kind of document", () => {
     expect(extractionPrompt("delivery_note", "x")).toContain("purchase order (PO) number");
     expect(extractionPrompt("loading_sheet", "x")).toContain("sales order number");
+  });
+});
+
+describe("labelledReference", () => {
+  // OCR text from the real delivery-note-4472.png fixture, where the model picked the wrong number.
+  const note =
+    "SafeWorks  East  Africa  DELIVERY  NOTE\nP.0  Box 4412,  Nairobi  Kenya  No  SW-20417\nDate:  2026-10 -28\nYour PO No  4472  Supplier: Safellorks East Africa";
+
+  it("reads the PO number next to its label and ignores the P.O. Box and the note number", () => {
+    expect(labelledReference("delivery_note", note)).toBe("4472");
+    expect(labelledReference("delivery_note", "Your P0 No.: 4471")).toBe("4471");
+    expect(labelledReference("delivery_note", "P.O. Box 4412, Nairobi")).toBeNull();
+  });
+
+  it("reads the order number on a loading sheet", () => {
+    expect(labelledReference("loading_sheet", "LOADING SHEET No. LS-5521\nOrder No. 5521  Customer: Mombasa")).toBe("5521");
+    expect(labelledReference("loading_sheet", "No. LS-5521")).toBeNull();
+  });
+
+  it("overrides a wrong model reference", () => {
+    const read = buildDocumentRead("delivery_note", note, JSON.stringify({ reference: "4412", party: null, lines: [] }));
+    expect(read.reference).toEqual({ value: "4472", confidence: 0.95 });
   });
 });

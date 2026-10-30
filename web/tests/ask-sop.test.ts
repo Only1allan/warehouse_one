@@ -80,6 +80,15 @@ describe("ask: procedure questions", () => {
     expect(model.askRequests).toHaveLength(1);
   });
 
+  it("refuses a weak match just below the relevance threshold without calling the model", async () => {
+    const model = routeToSops(new FakeModelPort(), "How do I bake bread?");
+    model.sopPassages = [{ ...damaged, score: 0.39 }];
+    const result = await run(model, "How do I bake bread?");
+    expect(result.text).toBe(SOP_REFUSAL);
+    expect(result.sources).toEqual([]);
+    expect(model.askRequests).toHaveLength(1);
+  });
+
   it("refuses when retrieval returns nothing at all", async () => {
     const model = routeToSops(new FakeModelPort(), "something unrelated");
     const result = await run(model, "something unrelated");
@@ -93,6 +102,25 @@ describe("ask: procedure questions", () => {
     expect(result.text).toBe(SOP_REFUSAL);
     expect(result.text).not.toContain("NOT_COVERED");
     expect(result.sources).toEqual([]);
+  });
+
+  it("keeps a grounded answer the model wrongly prefixed with NOT_COVERED", async () => {
+    const model = routeToSops(new FakeModelPort(), "damaged").queueTurn({
+      tokens: ["NOT_COVERED", "  2. Place the damaged inventory in the quarantine area (location QUAR) immediately."],
+    });
+    model.sopPassages = [damaged];
+    const result = await run(model, "damaged");
+    expect(result.text).toBe("2. Place the damaged inventory in the quarantine area (location QUAR) immediately.");
+    expect(result.sources).toHaveLength(1);
+  });
+
+  it("still refuses when the text after NOT_COVERED is not from the passages", async () => {
+    const model = routeToSops(new FakeModelPort(), "damaged").queueTurn({
+      tokens: ["NOT_COVERED", " but generally you should call your manager and wait for instructions."],
+    });
+    model.sopPassages = [damaged];
+    const result = await run(model, "damaged");
+    expect(result.text).toBe(SOP_REFUSAL);
   });
 
   it("strips an ANSWER: prefix the model may add", async () => {

@@ -81,4 +81,33 @@ test.describe("hands-free voice with a microphone", () => {
     await page.getByTestId("audio-upload").setInputFiles(path.join(fixtures, "audio", "question-03.wav"));
     await expect(page.getByTestId("heard")).toContainText(/minimum/i, { timeout: 120_000 });
   });
+
+  test("keyboard hold-to-talk sends on key up", async ({ page }) => {
+    await resetAndSignIn(page, "amina");
+    await page.goto("/voice");
+    const button = page.getByTestId("push-to-talk");
+    await button.focus();
+    await page.keyboard.down("Space");
+    await expect(button).toContainText("Listening");
+    await page.waitForTimeout(3500);
+    await page.keyboard.up("Space");
+    await expect(page.getByTestId("heard")).toContainText(/generator/i, { timeout: 120_000 });
+  });
+
+  test("a quick tap does not leave the microphone recording", async ({ page }) => {
+    await resetAndSignIn(page, "amina");
+    await page.goto("/voice");
+    const button = page.getByTestId("push-to-talk");
+    await button.click();
+    await expect(button).not.toContainText("Listening");
+  });
+
+  test("spoken PO number is normalized", async ({ page }) => {
+    await resetAndSignIn(page, "amina");
+    await page.goto("/ask");
+    await page.getByTestId("audio-upload").setInputFiles(path.join(fixtures, "audio", "question-10.wav"));
+    await expect(page.getByTestId("heard")).toContainText(/4471/, { timeout: 120_000 });
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page.getByTestId("answer-text")).toContainText(/PO 4471/i, { timeout: 180_000 });
+  });
 });

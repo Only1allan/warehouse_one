@@ -24,6 +24,7 @@ describe("ask: the model has no way to write", () => {
       "get_receiving_schedule",
       "get_stock_level",
       "list_below_minimum",
+      "not_warehouse",
       "search_sops",
     ]);
   });
@@ -49,6 +50,7 @@ describe("ask: inventory lookup", () => {
     expect(result.text).toBe("We currently have 43 units of Portable Generator 5kW in stock.");
     expect(result.text).not.toContain("9999");
     expect(result.card).toMatchObject({ kind: "stock", total: 43 });
+    expect(model.askRequests).toHaveLength(1);
   });
 
   it("answers 'Where is SKU 001254 stored?' with aisle, rack and shelf", async () => {
@@ -140,6 +142,37 @@ describe("ask: schedule, below minimum and PO lookup", () => {
     expect(skus).toEqual(expect.arrayContaining(["100410", "300118"]));
   });
 
+  it.each([
+    ["{}", "What stock is below minimum levels?", {}, ["100410", "300118"]],
+    ["None", "What stock is below minimum levels?", { category: "None" }, ["100410", "300118"]],
+    ["running low", "What stock is below minimum levels?", { category: "running low" }, ["100410", "300118"]],
+    ["all", "What stock is below minimum levels?", { category: "all" }, ["100410", "300118"]],
+    ["Safety", "Which safety items are below minimum?", { category: "Safety" }, ["300118"]],
+    ["Packaging", "Which packaging items are below minimum?", { category: "Packaging" }, ["100410"]],
+    ["Power Equipment", "Which power equipment items are below minimum?", { category: "Power Equipment" }, []],
+  ])("list_below_minimum handles %s", async (_label, message, args, expected) => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "list_below_minimum", arguments: args }],
+    });
+    const result = await run(model, { message });
+    const items = (result.card as { items: Array<{ sku: string }> }).items;
+    expect(items.map((item) => item.sku).sort()).toEqual(expected);
+  });
+
+  it("drops a category the user did not ask for", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "list_below_minimum", arguments: { category: "Safety" } }],
+    });
+    const result = await run(model, { message: "What stock is below minimum levels?" });
+    const items = (result.card as { items: Array<{ sku: string }> }).items;
+    expect(items.map((item) => item.sku).sort()).toEqual(["100410", "300118"]);
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "list_below_minimum",
+      arguments: {},
+      routedBy: "fallback",
+    });
+  });
+
   it("returns the purchase orders due today by default", async () => {
     const model = new FakeModelPort().queueTurn({ toolCalls: [{ name: "get_receiving_schedule", arguments: {} }] });
     const result = await run(model, { message: "Show today's receiving schedule." });
@@ -172,6 +205,118 @@ describe("ask: schedule, below minimum and PO lookup", () => {
   });
 });
 
+describe("ask: routing guard and off-topic backstop", () => {
+  it.each([
+    ["Do we have any pressure washers?", "search_sops", "get_stock_level"],
+    ["Do we have any pressure washers?", "list_below_minimum", "get_stock_level"],
+    ["How do I process returns?", "get_stock_level", "search_sops"],
+    ["What is the receiving process?", "get_receiving_schedule", "search_sops"],
+    ["Give me the forklift inspection checklist.", "get_stock_level", "search_sops"],
+    ["How much can one person lift?", "get_stock_level", "search_sops"],
+    ["Where is the procedure for returns?", "find_location", "search_sops"],
+  ])("guardRoute corrects %s", async (message, modelTool, expected) => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: modelTool, arguments: {} }],
+    });
+    const result = await run(model, { message });
+    const tool = result.events.find((event) => event.type === "tool");
+    expect(tool).toMatchObject({ name: expected, routedBy: "fallback" });
+  });
+
+  it("returns 11 pressure washers after correcting the model's SOP choice", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "search_sops", arguments: { question: "pressure washers" } }],
+    });
+    const result = await run(model, { message: "Do we have any pressure washers?" });
+    expect(result.card).toMatchObject({ kind: "stock", total: 11 });
+    expect(result.text).toContain("Pressure Washer");
+  });
+
+  it("returns 11 pressure washers instead of a low-stock list", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "list_below_minimum", arguments: { category: "Pressure Washers" } }],
+    });
+    const result = await run(model, { message: "Do we have any pressure washers?" });
+    expect(result.card).toMatchObject({ kind: "stock", total: 11 });
+    expect(result.text).toContain("Pressure Washer");
+  });
+
+  it("keeps a correct model choice", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "find_location", arguments: { query: "001254" } }],
+    });
+    const result = await run(model, { message: "Where is SKU 001254 stored?" });
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "find_location",
+      routedBy: "model",
+    });
+  });
+
+  it.each([
+    "How much can one person lift?",
+    "Where is the procedure for returns?",
+  ])("keeps the model's SOP choice for %s", async (message) => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "search_sops", arguments: { question: message } }],
+    });
+    const result = await run(model, { message });
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "search_sops",
+      routedBy: "model",
+    });
+  });
+
+  it("routes procedure wording before data words in the fallback", () => {
+    expect(fallbackRoute("How much can one person lift?")).toMatchObject({
+      name: "search_sops",
+    });
+    expect(fallbackRoute("Where is the procedure for returns?")).toMatchObject({
+      name: "search_sops",
+    });
+  });
+
+  it.each(["Tell me a joke", "What is the capital of France?"])(
+    "refuses off-topic question %s",
+    async (message) => {
+      const model = new FakeModelPort().queueTurn({
+        toolCalls: [{ name: "get_receiving_schedule", arguments: {} }],
+      });
+      const result = await run(model, { message });
+      expect(result.text).toContain("I can help with stock levels");
+      expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+        name: "not_warehouse",
+        routedBy: "fallback",
+      });
+    },
+  );
+
+  it("prefers a confident fallback over the model's not_warehouse escape", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "not_warehouse", arguments: {} }],
+    });
+    const result = await run(model, { message: "How many generators do we have?" });
+    expect(result.card).toMatchObject({ kind: "stock", total: 43 });
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "get_stock_level",
+      routedBy: "fallback",
+    });
+  });
+
+  it("corrects a spoken PO number", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "get_po", arguments: { po_number: "44714" } }],
+    });
+    const result = await run(model, {
+      message: "What is on purchase order four four seven one?",
+    });
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "get_po",
+      arguments: { po_number: "4471" },
+    });
+    expect(result.card).toMatchObject({ kind: "po", poNumber: "4471" });
+  });
+});
+
 describe("ask: when the model gives no usable tool call", () => {
   it("falls back to deterministic routing for a warehouse question, ignoring model prose", async () => {
     const model = new FakeModelPort().queueTurn({ tokens: ["There are 7 generators, I think."] });
@@ -181,11 +326,15 @@ describe("ask: when the model gives no usable tool call", () => {
     expect(tool).toMatchObject({ routedBy: "fallback", name: "get_stock_level" });
   });
 
-  it("shows the model's short reply to an off-topic question", async () => {
+  it("refuses an off-topic question instead of showing model prose", async () => {
     const model = new FakeModelPort().queueTurn({ tokens: ["I can only help with warehouse work."] });
     const result = await run(model, { message: "What is the weather in Nairobi?" });
-    expect(result.text).toBe("I can only help with warehouse work.");
+    expect(result.text).toContain("I can help with stock levels");
     expect(result.card).toBeUndefined();
+    expect(result.events.find((event) => event.type === "tool")).toMatchObject({
+      name: "not_warehouse",
+      routedBy: "fallback",
+    });
   });
 
   it("shows a help message when the model says nothing", async () => {
@@ -228,5 +377,44 @@ describe("fallbackRoute", () => {
   });
   it("returns nothing for small talk", () => {
     expect(fallbackRoute("hello there")).toBeNull();
+  });
+});
+
+describe("ask: late deliveries", () => {
+  // Seeded six days before "now", so the open purchase orders are now overdue.
+  const staleDb = () => freshDb(new Date(2026, 9, 22, 10, 0, 0));
+
+  it.each([
+    ["What stock is behind schedule?", "get_stock_level", { query: "stock behind schedule" }],
+    ["Which deliveries are late?", "get_receiving_schedule", { date: "today" }],
+    ["Any overdue purchase orders?", "list_below_minimum", {}],
+  ])("%s lists the overdue open POs", async (message, modelTool, args) => {
+    const model = new FakeModelPort().queueTurn({ toolCalls: [{ name: modelTool, arguments: args }] });
+    const result = await run(model, { message }, staleDb());
+    expect(result.card).toMatchObject({ kind: "schedule", label: "overdue" });
+    const orders = (result.card as { orders: Array<{ poNumber: string; daysLate: number }> }).orders;
+    expect(orders.map((o) => o.poNumber)).toEqual(["4471", "4472", "4473", "4474", "4476"]);
+    expect(orders[0].daysLate).toBe(6);
+    expect(result.text).toContain("behind schedule");
+  });
+
+  it("says nothing is late when every open PO is due today or later", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "get_receiving_schedule", arguments: { date: "overdue" } }],
+    });
+    const result = await run(model, { message: "What is behind schedule?" });
+    expect(result.text).toContain("No deliveries are behind schedule");
+  });
+
+  it("keeps a procedure question about a late delivery on the SOPs", () => {
+    expect(fallbackRoute("What should I do with a late delivery?")?.name).toBe("search_sops");
+  });
+
+  it("retries a failed product search with the rule router instead of dead-ending", async () => {
+    const model = new FakeModelPort().queueTurn({
+      toolCalls: [{ name: "get_stock_level", arguments: { query: "stuff to reorder" } }],
+    });
+    const result = await run(model, { message: "Show me stuff to reorder" });
+    expect(result.card).toMatchObject({ kind: "below_minimum" });
   });
 });

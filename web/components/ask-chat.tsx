@@ -15,7 +15,18 @@ interface Message {
   text: string;
   cards: Card[];
   state: "streaming" | "done" | "stopped" | "error";
+  tool?: { name: string; routedBy: "model" | "fallback" };
 }
+
+const TOOL_LABELS: Record<string, string> = {
+  get_stock_level: "stock record",
+  find_location: "location record",
+  list_below_minimum: "minimum-stock list",
+  get_receiving_schedule: "receiving schedule",
+  get_po: "purchase order",
+  search_sops: "procedure library",
+  not_warehouse: "warehouse scope",
+};
 
 const EXAMPLES = [
   "How many generators do we have?",
@@ -40,6 +51,7 @@ export function AskChat({
   const [input, setInput] = useState("");
   const [context, setContext] = useState<ConversationContext>({});
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const idRef = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
@@ -48,13 +60,27 @@ export function AskChat({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
+  useEffect(() => {
+    if (!busy) {
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), 3000);
+    return () => clearTimeout(timer);
+  }, [busy]);
+
   function patchLast(update: (m: Message) => Message) {
     setMessages((all) => all.map((m, i) => (i === all.length - 1 ? update(m) : m)));
   }
 
   async function send(raw: string) {
     const message = raw.trim();
-    if (!message || busy) return;
+    if (!message) return;
+    if (busy) {
+      // Do not silently lose a transcript that arrives while the previous answer streams.
+      setInput(message);
+      return;
+    }
     const history = messages
       .filter((m) => m.state !== "error" && m.text)
       .slice(-4)
@@ -76,6 +102,8 @@ export function AskChat({
         (event) => {
           if (event.type === "card") patchLast((m) => ({ ...m, cards: [...m.cards, event.card] }));
           else if (event.type === "token") patchLast((m) => ({ ...m, text: m.text + event.text }));
+          else if (event.type === "tool")
+            patchLast((m) => ({ ...m, tool: { name: event.name, routedBy: event.routedBy } }));
           else if (event.type === "context") setContext(event.context);
           else if (event.type === "done") {
             patchLast((m) => ({ ...m, state: event.reason === "cancelled" ? "stopped" : "done" }));
@@ -136,7 +164,19 @@ export function AskChat({
                   <div className="space-y-2" aria-label="Working on it">
                     <Skeleton className="h-5 w-3/4" />
                     <Skeleton className="h-5 w-1/2" />
+                    <p className="text-sm text-soft" role="status">
+                      {slow
+                        ? "Preparing the on-device model… the first question can take up to 40 seconds."
+                        : "Working on it…"}
+                    </p>
                   </div>
+                ) : null}
+                {m.tool ? (
+                  <p className="mb-2 text-xs font-medium text-soft" data-testid="route-status">
+                    Checked the {TOOL_LABELS[m.tool.name] ?? m.tool.name}
+                    {" · "}
+                    {m.tool.routedBy === "model" ? "routed by the on-device model" : "fallback router"}
+                  </p>
                 ) : null}
                 {m.text ? (
                   <p className={m.state === "error" ? "font-medium text-bad" : ""} data-testid="answer-text">
@@ -160,11 +200,19 @@ export function AskChat({
 
       {voiceFirst ? (
         <div className="order-first" data-testid="hands-free">
-          <VoiceButton large onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />
+          <VoiceButton
+            large
+            autoSendMs={6000}
+            onSend={(text) => void send(text)}
+            onEdit={setInput}
+            disabled={busy}
+          />
         </div>
       ) : null}
       <div className="sticky bottom-24 z-[5] space-y-2 rounded-panel border border-line bg-surface p-2 shadow-panel md:bottom-4">
-      {voiceFirst ? null : <VoiceButton onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />}
+      {voiceFirst ? null : (
+        <VoiceButton autoSendMs={null} onSend={(text) => void send(text)} onEdit={setInput} disabled={busy} />
+      )}
       <form
         className="flex gap-2"
         onSubmit={(e) => {

@@ -16,7 +16,7 @@
     "smoke:api": "tsx scripts/smoke-api.mts",
     "offline:check": "bash scripts/offline-check.sh",
     "phone": "node scripts/https-proxy.mjs",
-    "eval": "tsx scripts/eval.mts"
+    "eval": "node --import tsx/esm scripts/eval.mts"
   },
   "dependencies": {
     "@qvac/sdk": "^0.22.0",

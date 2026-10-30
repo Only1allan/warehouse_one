@@ -63,7 +63,7 @@ function resolveProduct(
   return {
     outcome: {
       card: { kind: "not_found", query, what: "product" },
-      text: `I couldn't find a product matching “${query}”. Check the name or the SKU.`,
+      text: `I couldn't find a product matching “${query}”. Check the name or the SKU. I can also list low stock, late or due deliveries, purchase orders and procedures.`,
     },
   };
 }
@@ -180,7 +180,42 @@ function resolveDate(raw: unknown, now: Date): { date: string; label: string } {
   return { date: dayKey(now), label: "today" };
 }
 
+/** "overdue", "late", "behind schedule": open deliveries whose expected date has passed. */
+export function isOverdueRequest(raw: unknown): boolean {
+  return typeof raw === "string" && /overdue|late|behind|past\s*due|delayed/i.test(raw);
+}
+
+function getOverdueDeliveries(db: Db, now: Date): ToolOutcome {
+  const today = dayKey(now);
+  const pos = db
+    .prepare(
+      "SELECT po_number, supplier, expected_date FROM purchase_orders WHERE status = 'open' AND expected_date < ? ORDER BY expected_date, po_number",
+    )
+    .all(today) as Array<{ po_number: string; supplier: string; expected_date: string }>;
+  const lineStmt = db.prepare("SELECT description, qty_ordered FROM po_lines WHERE po_number = ? ORDER BY id");
+  const daysLate = (date: string) => Math.round((Date.parse(today) - Date.parse(date)) / 86_400_000);
+  const orders = pos.map((po) => ({
+    poNumber: po.po_number,
+    supplier: po.supplier,
+    status: "open" as const,
+    expectedDate: po.expected_date,
+    daysLate: daysLate(po.expected_date),
+    lines: (lineStmt.all(po.po_number) as Array<{ description: string; qty_ordered: number }>).map((l) => ({
+      description: l.description,
+      qty: l.qty_ordered,
+    })),
+  }));
+  const text =
+    orders.length === 0
+      ? "No deliveries are behind schedule. Every open purchase order is due today or later."
+      : `${orders.length} ${orders.length === 1 ? "delivery is" : "deliveries are"} behind schedule: ${orders
+          .map((o) => `PO ${o.poNumber} from ${o.supplier}, ${o.daysLate} ${plural("day", o.daysLate)} late`)
+          .join("; ")}.`;
+  return { card: { kind: "schedule", date: today, label: "overdue", orders }, text };
+}
+
 export function getReceivingSchedule(db: Db, args: Record<string, unknown>, now: Date): ToolOutcome {
+  if (isOverdueRequest(args.date)) return getOverdueDeliveries(db, now);
   const { date, label } = resolveDate(args.date, now);
   const pos = db
     .prepare("SELECT po_number, supplier, status FROM purchase_orders WHERE expected_date = ? ORDER BY po_number")

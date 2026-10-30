@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import https from "node:https";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
@@ -26,9 +27,68 @@ const addresses = Object.values(os.networkInterfaces())
   .filter((a) => a && a.family === "IPv4" && !a.internal)
   .map((a) => a.address);
 
+const isWsl =
+  fs.existsSync("/proc/version") &&
+  fs.readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft");
+
+/** The Windows Wi-Fi/Ethernet address, which is the one a phone can reach. */
+function windowsLanAddress() {
+  if (!isWsl) return null;
+  try {
+    const output = execFileSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-Command",
+        "Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' -and $_.InterfaceAlias -notmatch 'vEthernet|Loopback|WSL' } | Select-Object -First 1 -ExpandProperty IPAddress",
+      ],
+      { encoding: "utf8", timeout: 8_000 },
+    );
+    return output.trim().split(/\r?\n/)[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+const windowsAddress = windowsLanAddress();
+const phoneAddress = windowsAddress ?? addresses[0] ?? "localhost";
+
+/** True when Windows already forwards this port to the current WSL address. */
+function windowsForwardConfigured() {
+  if (!isWsl || !addresses[0]) return false;
+  try {
+    const output = execFileSync("netsh.exe", ["interface", "portproxy", "show", "v4tov4"], {
+      encoding: "utf8",
+      timeout: 8_000,
+    });
+    return output.includes(String(LISTEN_PORT)) && output.includes(addresses[0]);
+  } catch {
+    return false;
+  }
+}
+
+function appIsListening() {
+  return new Promise((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port: TARGET_PORT });
+    const done = (open) => {
+      socket.destroy();
+      resolve(open);
+    };
+    socket.setTimeout(1_000);
+    socket.once("connect", () => done(true));
+    socket.once("error", () => done(false));
+    socket.once("timeout", () => done(false));
+  });
+}
+
 if (!fs.existsSync(keyFile) || !fs.existsSync(certFile)) {
   fs.mkdirSync(certDir, { recursive: true });
-  const san = ["DNS:localhost", "IP:127.0.0.1", ...addresses.map((a) => `IP:${a}`)].join(",");
+  const san = [
+    "DNS:localhost",
+    "IP:127.0.0.1",
+    ...(windowsAddress ? [`IP:${windowsAddress}`] : []),
+    ...addresses.map((a) => `IP:${a}`),
+  ].join(",");
   execFileSync("openssl", [
     "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "365",
     "-keyout", keyFile, "-out", certFile,
@@ -55,5 +115,23 @@ const server = https.createServer({ key: fs.readFileSync(keyFile), cert: fs.read
 
 server.listen(LISTEN_PORT, "0.0.0.0", () => {
   console.log(`HTTPS proxy to http://localhost:${TARGET_PORT}`);
-  for (const a of ["localhost", ...addresses]) console.log(`  open  https://${a}:${LISTEN_PORT}`);
+  console.log(`  local  https://localhost:${LISTEN_PORT}`);
+  console.log(`  phone  https://${phoneAddress}:${LISTEN_PORT}`);
+  if (isWsl && windowsAddress) {
+    if (windowsForwardConfigured()) {
+      console.log(`  Windows port ${LISTEN_PORT} is forwarded to ${addresses[0]}.`);
+    } else {
+      console.log("");
+      console.log(`WSL detected. Windows must forward port ${LISTEN_PORT} to ${addresses[0] ?? "this WSL machine"}.`);
+      console.log("If the phone cannot connect, run this once in an Administrator PowerShell:");
+      console.log("  powershell -ExecutionPolicy Bypass -File scripts\\windows-portproxy.ps1");
+    }
+  }
+  void appIsListening().then((open) => {
+    if (!open) {
+      console.log("");
+      console.log(`Warning: nothing is listening on port ${TARGET_PORT} yet.`);
+      console.log('Start the app in another terminal with "npm run start".');
+    }
+  });
 });

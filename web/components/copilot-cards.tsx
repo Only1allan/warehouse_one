@@ -146,9 +146,11 @@ export function CopilotCard({
       );
     case "schedule":
       return (
-        <CardFrame label="Receiving schedule">
+        <CardFrame label={card.label === "overdue" ? "Late deliveries" : "Receiving schedule"}>
           {card.orders.length === 0 ? (
-            <div className="text-soft">No deliveries are due {card.label}.</div>
+            <div className="text-soft">
+              {card.label === "overdue" ? "Nothing is behind schedule." : `No deliveries are due ${card.label}.`}
+            </div>
           ) : (
             <ul className="divide-y divide-line">
               {card.orders.map((o) => (
@@ -158,6 +160,11 @@ export function CopilotCard({
                       PO {o.poNumber} · {o.supplier}
                     </span>
                     {o.status === "received" ? <StatusPill status="ok" label="Received" /> : null}
+                    {o.daysLate !== undefined ? (
+                      <span className="text-sm text-soft">
+                        Due {o.expectedDate} · {o.daysLate} {o.daysLate === 1 ? "day" : "days"} late
+                      </span>
+                    ) : null}
                   </div>
                   <div className="text-sm text-soft">
                     {o.lines.map((l) => `${l.qty} × ${l.description}`).join(", ")}

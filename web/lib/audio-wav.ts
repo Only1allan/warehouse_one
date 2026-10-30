@@ -28,6 +28,8 @@ export function encodeWav(samples: Float32Array, sampleRate: number): ArrayBuffe
 /** Decodes any recorded or uploaded audio in the browser and returns 16 kHz mono WAV. */
 export async function toWav16kMono(blob: Blob): Promise<Blob> {
   const context = new AudioContext();
+  // iOS can create the context in a suspended state until the user gesture resumes it.
+  if (context.state === "suspended") await context.resume();
   const decoded = await context.decodeAudioData(await blob.arrayBuffer());
   await context.close();
   const length = Math.max(1, Math.ceil(decoded.duration * 16000));

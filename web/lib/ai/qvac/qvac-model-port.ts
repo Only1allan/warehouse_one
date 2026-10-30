@@ -227,6 +227,11 @@ export class QvacModelPort implements ModelPort {
     return { text: String(text).trim() };
   }
 
+  /** Loads the speech model before the first recording so the first question is not a silent 30 s wait. */
+  async warmSpeech(): Promise<void> {
+    await this.models.get("speech");
+  }
+
   async readDocument(image: Uint8Array, kind: DocumentKind): Promise<DocumentRead> {
     const ocrId = await this.models.get("ocr");
     const blocks = await withTempFile(image, ".png", async (file) => {

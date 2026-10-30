@@ -43,3 +43,59 @@ export const TRANSCRIPT_MESSAGES: Record<NonNullable<TranscriptCheck["reason"]>,
   too_short: "That was too short to understand. Try asking the whole question.",
   noise: "I could not make out a question. Try again in a quieter spot.",
 };
+
+const DIGIT_WORDS: Record<string, string> = {
+  zero: "0",
+  oh: "0",
+  one: "1",
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+};
+
+const DIGIT_WORD = "(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)";
+const SPOKEN_NUMBER = new RegExp(`\\b${DIGIT_WORD}(?:[\\s-]+${DIGIT_WORD}){2,}\\b`, "gi");
+
+/** Converts "four four seven one" -> "4471", "zero zero one two five four" -> "001254". */
+export function normalizeSpokenNumbers(text: string): string {
+  return text.replace(SPOKEN_NUMBER, (match) =>
+    match
+      .toLowerCase()
+      .split(/[\s-]+/)
+      .map((word) => DIGIT_WORDS[word])
+      .join(""),
+  );
+}
+
+/**
+ * Parakeet mishears a few words from this warehouse's vocabulary. Correct only the
+ * errors observed in the fixtures; a broad spell-checker would create new mistakes.
+ */
+const DOMAIN_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bgraders\b/gi, "generators"],
+  [/\bgrader\b/gi, "generator"],
+  [/\bgeneraters\b/gi, "generators"],
+  [/\bgenerater\b/gi, "generator"],
+  [/\bgen[\s-]?sets\b/gi, "generators"],
+  [/\bgen[\s-]?set\b/gi, "generator"],
+];
+
+export function correctDomainTerms(text: string): {
+  text: string;
+  corrections: Array<{ from: string; to: string }>;
+} {
+  let output = text;
+  const corrections: Array<{ from: string; to: string }> = [];
+  for (const [pattern, replacement] of DOMAIN_REPLACEMENTS) {
+    output = output.replace(pattern, (match) => {
+      corrections.push({ from: match, to: replacement });
+      return replacement;
+    });
+  }
+  return { text: output, corrections };
+}

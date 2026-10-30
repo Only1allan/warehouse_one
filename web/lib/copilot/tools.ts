@@ -34,13 +34,14 @@ export const COPILOT_TOOLS: ToolDefinition[] = [
   {
     name: "list_below_minimum",
     description:
-      "List products whose stock is at or below the minimum level. Use for 'low stock', 'below minimum' or 'needs reordering'.",
+      "List products whose stock is at or below the minimum level. Use for 'low stock', 'below minimum' or 'needs reordering'. Omit the category unless the user names a real product category.",
     parameters: {
       type: "object",
       properties: {
         category: {
           type: "string",
-          description: "Optional product category to limit the list.",
+          description:
+            "Optional real product category, for example 'Safety' or 'Packaging'. Omit it for a general low-stock question. Never pass 'None', 'all' or 'running low'.",
         },
       },
     },
@@ -87,6 +88,15 @@ export const COPILOT_TOOLS: ToolDefinition[] = [
         },
       },
       required: ["question"],
+    },
+  },
+  {
+    name: "not_warehouse",
+    description:
+      "Use only when the question is not about warehouse operations, stock, locations, deliveries, purchase orders or procedures. Do not use it for warehouse questions.",
+    parameters: {
+      type: "object",
+      properties: {},
     },
   },
 ];

@@ -118,8 +118,36 @@ export function findLocation(db: Db, args: Record<string, unknown>, context: Con
   };
 }
 
+const PLACEHOLDER_CATEGORIES = new Set([
+  "",
+  "none",
+  "null",
+  "undefined",
+  "all",
+  "any",
+  "everything",
+  "running low",
+  "low stock",
+  "below minimum",
+  "below minimum levels",
+]);
+
 export function listBelowMinimum(db: Db, args: Record<string, unknown>): ToolOutcome {
-  const category = typeof args.category === "string" ? args.category.trim().toLowerCase() : "";
+  const raw = typeof args.category === "string" ? args.category.trim() : "";
+  const lower = raw.toLowerCase();
+
+  // The model often fills an optional argument with a placeholder. A filter is
+  // valid only when it names a category that actually exists in the seeded DB.
+  const categories = (
+    db.prepare("SELECT DISTINCT category FROM products").all() as Array<{ category: string }>
+  ).map((row) => row.category.toLowerCase());
+
+  const exact = categories.find((name) => name === lower);
+  const partial = lower.length >= 4 ? categories.filter((name) => name.includes(lower)) : [];
+  const valid =
+    !PLACEHOLDER_CATEGORIES.has(lower) && (exact ?? (partial.length === 1 ? partial[0] : undefined));
+  const category = valid ? (exact ?? partial[0] ?? "") : "";
+
   const rows = db
     .prepare(
       `SELECT p.sku, p.name, p.unit, p.category, p.min_stock, COALESCE(SUM(s.qty), 0) AS total

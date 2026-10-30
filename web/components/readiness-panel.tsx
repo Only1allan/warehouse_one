@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ModelRole, ModelStatus, PrepareProgress } from "@/lib/ai/model-port";
+import { readJson, request } from "@/lib/api-client";
 import { streamEvents } from "@/lib/sse-client";
 import { Icon } from "./icons";
 import { Button, Panel, Skeleton, StatusPill } from "./ui";
@@ -67,12 +68,23 @@ export function ReadinessPanel() {
 
   async function resetDemo() {
     setConfirmReset(false);
-    const response = await fetch("/api/admin/reseed", { method: "POST" });
-    setMessage(
-      response.ok
-        ? { tone: "ok", text: "Demo data was reset to its starting state." }
-        : { tone: "bad", text: "Could not reset the demo data." },
-    );
+    try {
+      const response = await request("/api/admin/reseed", { method: "POST" });
+      const data = await readJson(response);
+      setMessage(
+        response.ok
+          ? { tone: "ok", text: "Demo data was reset to its starting state." }
+          : {
+              tone: "bad",
+              text:
+                response.status === 403
+                  ? "Only a supervisor can reset the demo data. Sign in as a supervisor and try again."
+                  : `Could not reset the demo data. ${data?.error?.message ?? ""}`.trim(),
+            },
+      );
+    } catch (e) {
+      setMessage({ tone: "bad", text: (e as Error).message });
+    }
   }
 
   const missing = models?.filter((m) => m.state === "missing") ?? [];

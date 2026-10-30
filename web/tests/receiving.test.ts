@@ -5,6 +5,7 @@ import {
   confirmReceipt,
   getPurchaseOrder,
   listPurchaseOrders,
+  registerPurchaseOrder,
 } from "@/lib/services/receiving";
 import { dump, FIXED_NOW, freshDb } from "./helpers";
 
@@ -142,5 +143,52 @@ describe("receiving: confirm", () => {
       .prepare("SELECT received_qty, status FROM receipt_lines WHERE sku = '100410' ORDER BY id DESC")
       .get();
     expect(line).toMatchObject({ received_qty: 0, status: "missing" });
+  });
+});
+
+describe("receiving: a PO that arrives only on a delivery note", () => {
+  const actor = { operatorId: "o-amina", shiftId: "s-morning" };
+
+  it("adds the order and its lines to the database, then it can be received", () => {
+    const db = freshDb();
+    const po = registerPurchaseOrder(db, { now: FIXED_NOW }, {
+      ...actor,
+      poNumber: "PO 5001",
+      supplier: "SafeWorks East Africa",
+      lines: [
+        { sku: "300118", qty: 30 },
+        { sku: "300125", qty: 10 },
+        { sku: "300118", qty: 5 },
+      ],
+    });
+    expect(po).toMatchObject({ poNumber: "5001", supplier: "SafeWorks East Africa", status: "open" });
+    expect(po.lines.map((l) => [l.sku, l.qtyOrdered])).toEqual([
+      ["300118", 35],
+      ["300125", 10],
+    ]);
+    expect(listPurchaseOrders(db, { status: "open" }).map((p) => p.poNumber)).toContain("5001");
+
+    const before = stockOf(db, "300118");
+    const { report } = confirmReceipt(db, { now: FIXED_NOW }, {
+      ...actor,
+      poNumber: "5001",
+      lines: [
+        { sku: "300118", qty: 35 },
+        { sku: "300125", qty: 10 },
+      ],
+    });
+    expect(report.hasDiscrepancy).toBe(false);
+    expect(stockOf(db, "300118")).toBe(before + 35);
+  });
+
+  it("rejects a note without a PO number, an existing PO, and a note with no usable lines", () => {
+    const db = freshDb();
+    const add = (poNumber: string, lines = [{ sku: "300118", qty: 1 }]) => () =>
+      registerPurchaseOrder(db, { now: FIXED_NOW }, { ...actor, poNumber, supplier: null, lines });
+    expect(add("")).toThrow(/without a PO number/);
+    expect(add("4471")).toThrow(/already in the system/);
+    expect(add("5002", [])).toThrow(/no product lines/);
+    expect(add("5003", [{ sku: "NOPE", qty: 2 }])).toThrow(AppError);
+    expect(listPurchaseOrders(db).map((p) => p.poNumber)).not.toContain("5003");
   });
 });

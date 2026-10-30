@@ -8,6 +8,7 @@ import {
 } from "../domain/discrepancy";
 import { AppError } from "../errors";
 import { recordEvent } from "../events";
+import { dayKey } from "../time";
 import { isValidActor } from "./session";
 
 export interface PurchaseOrderSummary {
@@ -219,4 +220,62 @@ export function confirmReceipt(
 
     return { receiptId, report };
   });
+}
+
+export interface RegisterPurchaseOrderInput {
+  poNumber: string;
+  supplier: string | null;
+  lines: ReceivedLineInput[];
+  operatorId: string;
+  shiftId: string;
+}
+
+/**
+ * Adds a purchase order the warehouse did not have yet, from a delivery note the clerk
+ * photographed and checked. The note is the only record of the order, so its quantities
+ * become the ordered quantities. Only known products can be added; the received
+ * quantities are still counted and confirmed separately.
+ */
+export function registerPurchaseOrder(
+  db: Db,
+  deps: { now: Date },
+  input: RegisterPurchaseOrderInput,
+): PurchaseOrder {
+  if (!isValidActor(db, input.operatorId, input.shiftId)) {
+    throw new AppError("unknown_actor", "Choose an operator and shift before adding an order.");
+  }
+  const poNumber = String(input.poNumber ?? "").replace(/\D/g, "");
+  if (poNumber.length < 3) {
+    throw new AppError("invalid_request", "A delivery note without a PO number cannot be received.");
+  }
+  if (db.prepare("SELECT 1 FROM purchase_orders WHERE po_number = ?").get(poNumber)) {
+    throw new AppError("conflict", `Purchase order ${poNumber} is already in the system.`, 409);
+  }
+  const lines = (Array.isArray(input.lines) ? input.lines : []).filter((l) => l && l.qty > 0);
+  if (lines.length === 0) {
+    throw new AppError("invalid_request", "The note has no product lines that could be added to the order.");
+  }
+  validateLines(db, lines);
+  const merged = new Map<string, number>();
+  for (const line of lines) merged.set(line.sku, (merged.get(line.sku) ?? 0) + line.qty);
+  const supplier = input.supplier?.trim() || "Unknown supplier";
+  const day = dayKey(deps.now);
+
+  inTransaction(db, () => {
+    db.prepare("INSERT INTO purchase_orders (po_number, supplier, expected_date, status) VALUES (?, ?, ?, 'open')").run(
+      poNumber,
+      supplier,
+      day,
+    );
+    const insLine = db.prepare("INSERT INTO po_lines (po_number, sku, description, qty_ordered) VALUES (?, ?, ?, ?)");
+    for (const [sku, qty] of merged) insLine.run(poNumber, sku, productName(db, sku), qty);
+    recordEvent(db, {
+      type: "po_registered",
+      operatorId: input.operatorId,
+      shiftId: input.shiftId,
+      at: deps.now,
+      payload: { poNumber, supplier, lines: merged.size },
+    });
+  });
+  return getPurchaseOrder(db, poNumber);
 }

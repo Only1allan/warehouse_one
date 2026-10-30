@@ -48,11 +48,11 @@ describe("reading a delivery note", () => {
   it("asks the clerk to choose when the PO is unreadable or unknown", async () => {
     const unreadable = await read(note({ reference: { value: null, confidence: 0 } }));
     expect(unreadable.matchedPoNumber).toBeNull();
-    expect(unreadable.warnings[0]).toContain("Choose it from the list");
+    expect(unreadable.warnings[0]).toContain("No PO number was found");
 
     const unknown = await read(note({ reference: { value: "9999", confidence: 0.9 } }));
     expect(unknown.matchedPoNumber).toBeNull();
-    expect(unknown.warnings[0]).toContain("PO 9999 is not in the system");
+    expect(unknown.warnings[0]).toContain("PO 9999 is not in the system yet");
   });
 
   it("warns when the model is unsure of the order number or the PO is already received", async () => {

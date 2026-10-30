@@ -51,6 +51,7 @@ export function ReceiveFlow() {
   const [done, setDone] = useState<{ receiptId: number; report: ReceiptReport } | null>(null);
   const [note, setNote] = useState<ExtractedDocument | null>(null);
   const [reading, setReading] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -98,6 +99,37 @@ export function ReceiveFlow() {
       setError((e as Error).message);
     } finally {
       setReading(false);
+    }
+  }
+
+  // A note whose PO number is not in the system yet: the clerk can add it from the note.
+  const newPoNumber = note && note.reference && !note.matchedPoNumber ? note.reference : null;
+  const addableLines = note ? note.lines.filter((l) => l.sku && l.noteQty !== null && l.noteQty > 0) : [];
+  const skippedLines = note ? note.lines.filter((l) => !addableLines.includes(l)) : [];
+
+  async function addPurchaseOrder() {
+    if (!note || !newPoNumber) return;
+    setAdding(true);
+    setError(null);
+    try {
+      const created = await api<PurchaseOrder>("/api/receiving/register", {
+        poNumber: newPoNumber,
+        supplier: note.party,
+        lines: addableLines.map((l) => ({ sku: l.sku!, qty: l.noteQty! })),
+      });
+      setNote({
+        ...note,
+        matchedPoNumber: created.poNumber,
+        warnings: note.warnings.filter((w) => !w.includes("not in the system")),
+      });
+      setReport(null);
+      setReceived({});
+      setPo(created);
+      void loadOrders();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -232,6 +264,42 @@ export function ReceiveFlow() {
                 </li>
               ))}
             </ul>
+          ) : null}
+          {newPoNumber ? (
+            <div className="mt-4 rounded-control border border-line-strong bg-sunk p-4" data-testid="new-po">
+              <div className="font-semibold">
+                New purchase order: PO {newPoNumber}
+                {note?.party ? ` · ${note.party}` : ""}
+              </div>
+              {addableLines.length > 0 ? (
+                <>
+                  <p className="mt-1 text-sm text-soft">These lines were read from the note. Check them before adding the order.</p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {addableLines.map((l) => (
+                      <li key={`${l.sku}-${l.description}`}>
+                        {l.noteQty} × {l.description} (SKU {l.sku})
+                        {l.needsCheck ? <span className="font-medium text-warn"> · Check: {l.reasons.join(", ")}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                  {skippedLines.length > 0 ? (
+                    <p className="mt-2 text-sm font-medium text-warn">
+                      Not added (product or quantity not recognised):{" "}
+                      {skippedLines.map((l) => l.description || l.sku || "unreadable line").join(", ")}
+                    </p>
+                  ) : null}
+                  <div className="mt-3">
+                    <Button variant="primary" icon="check" onClick={addPurchaseOrder} disabled={adding}>
+                      {adding ? "Adding…" : `Add PO ${newPoNumber} and receive`}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-1 text-sm font-medium text-bad">
+                  No product lines could be read from this note, so the order cannot be added. Take a clearer photo.
+                </p>
+              )}
+            </div>
           ) : null}
         </div>
         <div className="mt-4 grid gap-2" role="radiogroup" aria-label="Purchase order">

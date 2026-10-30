@@ -2,6 +2,7 @@ import type { Db } from "./db";
 
 export type EventType =
   | "receipt_confirmed"
+  | "po_registered"
   | "dispatch_confirmed"
   | "count_confirmed"
   | "stock_adjusted"

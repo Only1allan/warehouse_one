@@ -50,6 +50,7 @@ export type Home =
 
 const eventSummary: Record<string, string> = {
   receipt_confirmed: "Confirmed a receipt",
+  po_registered: "Added a purchase order from a delivery note",
   dispatch_confirmed: "Confirmed a dispatch",
   count_confirmed: "Confirmed a count",
   stock_adjusted: "Adjusted stock",

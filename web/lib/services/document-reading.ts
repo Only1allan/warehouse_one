@@ -42,7 +42,13 @@ export async function readDocument(
   const read: DocumentRead = await deps.model.readDocument(image, kind);
   const reference = digits(read.reference.value);
   const warnings: string[] = [];
-  if (!reference) warnings.push("I could not read the order number. Choose it from the list.");
+  if (!reference) {
+    warnings.push(
+      kind === "delivery_note"
+        ? "No PO number was found on this note, so it cannot be received from the photo. Take a clearer photo, or choose the order from the list."
+        : "I could not read the order number. Choose it from the list.",
+    );
+  }
   else if (read.reference.confidence < LOW_CONFIDENCE) {
     warnings.push(`I am not sure the order number ${reference} is right. Please check it.`);
   }
@@ -63,7 +69,7 @@ export async function readDocument(
         ),
       );
     } else {
-      warnings.push(`PO ${reference} is not in the system. Choose the order from the list.`);
+      warnings.push(`PO ${reference} is not in the system yet. Check the lines read from the note, then add it.`);
     }
   }
   if (reference && kind === "loading_sheet") {
